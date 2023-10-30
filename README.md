@@ -1,28 +1,23 @@
-# FastBoard
+# VeloBoard
 
-[![Java CI](https://github.com/MrMicky-FR/FastBoard/actions/workflows/build.yml/badge.svg)](https://github.com/MrMicky-FR/FastBoard/actions/workflows/build.yml)
-[![Maven Central](https://img.shields.io/maven-central/v/fr.mrmicky/fastboard.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/fr.mrmicky/fastboard)
-[![Discord](https://img.shields.io/discord/390919659874156560.svg?colorB=5865f2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/q9UwaBT)
+![](https://img.shields.io/maven-central/v/io.github.timongcraft/veloboards?style=flat-square)
 
-Lightweight packet-based scoreboard API for Bukkit plugins, with 1.7.10 to 1.20 support.
+⚠️ Not yet uploaded to any maven repository
 
-⚠️ To use FastBoard on a 1.8 server, the server must be on 1.8.8.
+Scoreboard API for Velocity plugins (1.18.2-1.20.2)
+
+⚠️ To use VeloBoard first read [Register Packets](#registering-packets)!
 
 ## Features
 
-* No flickering (without using a buffer)
-* Works with all versions from 1.7.10 to 1.20
-* Very small (around 600 lines of code with the JavaDoc) and no dependencies
+* Works from version 1.18.2 to 1.20.2
+* Pretty small
 * Easy to use
+* Integrates [Adventure](https://github.com/KyoriPowered/adventure)
 * Dynamic scoreboard size: you don't need to add/remove lines, you can directly give a string list (or array) to change all the lines
-* Everything is at the packet level, so it works with other plugins using scoreboard and/or teams
 * Can be used asynchronously
-* Supports up to 30 characters per line on 1.12.2 and below
-* No character limit on 1.13 and higher
-* Supports hex colors on 1.16 and higher
-* [Adventure](https://github.com/KyoriPowered/adventure) components support
 
-## Installation
+## Getting started
 
 ### Maven
 ```xml
@@ -31,7 +26,7 @@ Lightweight packet-based scoreboard API for Bukkit plugins, with 1.7.10 to 1.20 
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
-            <version>3.3.0</version>
+            <version>3.5.1</version>
             <executions>
                 <execution>
                     <phase>package</phase>
@@ -43,9 +38,9 @@ Lightweight packet-based scoreboard API for Bukkit plugins, with 1.7.10 to 1.20 
             <configuration>
                 <relocations>
                     <relocation>
-                        <pattern>fr.mrmicky.fastboard</pattern>
+                        <pattern>timongcraft.veloboard</pattern>
                         <!-- Replace 'com.yourpackage' with the package of your plugin ! -->
-                        <shadedPattern>com.yourpackage.fastboard</shadedPattern>
+                        <shadedPattern>com.yourpackage.veloboard</shadedPattern>
                     </relocation>
                 </relocations>
             </configuration>
@@ -55,9 +50,9 @@ Lightweight packet-based scoreboard API for Bukkit plugins, with 1.7.10 to 1.20 
 
 <dependencies>
     <dependency>
-        <groupId>fr.mrmicky</groupId>
-        <artifactId>fastboard</artifactId>
-        <version>2.0.1</version>
+        <groupId>timongcraft.veloboard</groupId>
+        <artifactId>VeloBoard</artifactId>
+        <version>1.0.0</version>
     </dependency>
 </dependencies>
 ```
@@ -76,37 +71,41 @@ repositories {
 }
 
 dependencies {
-    implementation 'fr.mrmicky:fastboard:2.0.1'
+    implementation 'timongcraft:veloboard:1.0.0'
 }
 
 shadowJar {
     // Replace 'com.yourpackage' with the package of your plugin 
-    relocate 'fr.mrmicky.fastboard', 'com.yourpackage.fastboard'
+    relocate 'timongcraft.veloboard', 'com.yourpackage.veloboard'
 }
 ```
 
 ### Manual
 
-Copy `FastBoardBase.java`, `FastBoard.java` and `FastReflection.java` in your plugin.
+Copy all files in your plugin.
 
 ## Usage
 
+### Registering packets
+
+First you need to call `VeloBoardRegistry.register()` in your `Main` or `ProxyInitializeEvent` to register the necessary packets.
+
 ### Creating a scoreboard
 
-Simply create a new `FastBoard` and update the title and the lines:
+Simply create a new `VeloBoard` and update the title and the lines:
 
 ```java
-FastBoard board = new FastBoard(player);
+VeloBoard board = new VeloBoard(player);
 
 // Set the title
-board.updateTitle(ChatColor.GOLD + "FastBoard");
+board.updateTitle(Component.text("VeloBoard").color(NamedTextColor.DARK_BLUE));
 
 // Change the lines
 board.updateLines(
-        "", // Empty line
-        "One line",
-        "",
-        "Second line"
+        Component.empty(), // Empty line
+        Component.text("One line"),
+        Component.empty(),
+        Component.text("Second line")
 );
 ```
 
@@ -115,91 +114,82 @@ board.updateLines(
 Small example plugin with a scoreboard that refreshes every second:
 
 ```java
-package fr.mrmicky.fastboard.example;
+package timongcraft.veloboard.example;
 
-import fr.mrmicky.fastboard.FastBoard;
-import org.bukkit.ChatColor;
-import org.bukkit.Statistic;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
+import com.google.inject.Inject;
+import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.connection.DisconnectEvent;
+import com.velocitypowered.api.event.connection.PostLoginEvent;
+import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.plugin.Plugin;
+import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ProxyServer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public final class ExamplePlugin extends JavaPlugin implements Listener {
+@Plugin(
+        id = "example",
+        name = "ExamplePlugin",
+        version = "1.0"
+)
+public class ExamplePlugin {
 
-    private final Map<UUID, FastBoard> boards = new HashMap<>();
+    private final ProxyServer server;
 
-    @Override
-    public void onEnable() {
-        getServer().getPluginManager().registerEvents(this, this);
+    private final Map<UUID, VeloBoard> boards = new HashMap<>();
 
-        getServer().getScheduler().runTaskTimer(this, () -> {
-            for (FastBoard board : this.boards.values()) {
+    @Inject
+    public ExamplePlugin(ProxyServer server) {
+        this.server = server;
+    }
+
+    @Subscribe
+    public void onProxyInitialization(ProxyInitializeEvent event) {
+        server.getScheduler().buildTask(this, () -> {
+            for (VeloBoard board : boards.values())
                 updateBoard(board);
-            }
-        }, 0, 20);
+        }).repeat(Duration.ofSeconds(1)).schedule();
     }
 
-    @EventHandler
-    public void onJoin(PlayerJoinEvent e) {
-        Player player = e.getPlayer();
+    @Subscribe
+    public void onPostLogin(PostLoginEvent event) {
+        Player player = event.getPlayer();
 
-        FastBoard board = new FastBoard(player);
-
-        board.updateTitle(ChatColor.RED + "FastBoard");
-
-        this.boards.put(player.getUniqueId(), board);
+        VeloBoard board = new VeloBoard(player);
+        board.updateTitle(Component.text("FastBoard").color(NamedTextColor.DARK_BLUE));
+        boards.put(player.getUniqueId(), board);
     }
 
-    @EventHandler
-    public void onQuit(PlayerQuitEvent e) {
-        Player player = e.getPlayer();
+    @Subscribe
+    public void onDisconnect(DisconnectEvent event) {
+        Player player = event.getPlayer();
 
-        FastBoard board = this.boards.remove(player.getUniqueId());
-
-        if (board != null) {
+        VeloBoard board = boards.remove(player.getUniqueId());
+        if (board != null)
             board.delete();
-        }
     }
 
-    private void updateBoard(FastBoard board) {
+    private void updateBoard(VeloBoard board) {
         board.updateLines(
-                "",
-                "Players: " + getServer().getOnlinePlayers().size(),
-                "",
-                "Kills: " + board.getPlayer().getStatistic(Statistic.PLAYER_KILLS),
-                ""
+                Component.empty(),
+                Component.text("Players: " + server.getPlayerCount()),
+                Component.empty(),
+                Component.text("Ping: " + board.getPlayer().getPing()),
+                Component.empty()
         );
     }
+
 }
 ```
 
-## Adventure support
+-----
 
-For servers on modern [PaperMC](https://papermc.io) versions, FastBoard supports
-using [Adventure](https://github.com/KyoriPowered/adventure) components instead of strings, 
-by using the class `fr.mrmicky.fastboard.adventure.FastBoard`.
+# Inspiration/Base
 
-## RGB colors
+- [FastBoard](https://github.com/MrMicky-FR/FastBoard) (MIT License)
 
-When using the non-Adventure version of FastBoard, RGB colors can be added on 1.16 and higher with `ChatColor.of("#RRGGBB")` (`net.md_5.bungee.api.ChatColor` import).
-
-## ViaBackwards compatibility
-
-When using ViaBackwards on a post-1.13 server with pre-1.13 clients, older clients
-might get incomplete lines. To solve this issue, you can override the method `hasLinesMaxLength()` and return `true` for older clients.
-For example using the ViaVersion API:
-```java
-FastBoard board = new FastBoard(player) { 
-    @Override
-    public boolean hasLinesMaxLength() {
-        return Via.getAPI().getPlayerVersion(getPlayer()) < ProtocolVersion.v1_13.getVersion(); // or just 'return true;'
-    }
-});
-```
