@@ -18,13 +18,13 @@ public class DisplayObjectivePacket implements MinecraftPacket {
                 .direction(ProtocolUtils.Direction.CLIENTBOUND)
                 .packetSupplier(DisplayObjectivePacket::new)
                 .stateRegistry(StateRegistry.PLAY)
-                .mapping(0x53, MINECRAFT_1_20_2, false)
-                .mapping(0x51, MINECRAFT_1_20, false)
-                .mapping(0x51, MINECRAFT_1_19_4, false)
-                .mapping(0x4D, MINECRAFT_1_19_3, false)
-                .mapping(0x4F, MINECRAFT_1_19_1, false)
-                .mapping(0x4C, MINECRAFT_1_19, false)
                 .mapping(0x4C, MINECRAFT_1_18_2, false)
+                .mapping(0x4C, MINECRAFT_1_19, false)
+                .mapping(0x4F, MINECRAFT_1_19_1, false)
+                .mapping(0x4D, MINECRAFT_1_19_3, false)
+                .mapping(0x51, MINECRAFT_1_19_4, false)
+                .mapping(0x51, MINECRAFT_1_20, false)
+                .mapping(0x53, MINECRAFT_1_20_2, false)
                 .register();
     }
 

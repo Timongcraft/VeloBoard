@@ -19,13 +19,13 @@ public class UpdateObjectivesPacket implements MinecraftPacket {
                 .direction(ProtocolUtils.Direction.CLIENTBOUND)
                 .packetSupplier(UpdateObjectivesPacket::new)
                 .stateRegistry(StateRegistry.PLAY)
-                .mapping(0x5A, MINECRAFT_1_20_2, false)
-                .mapping(0x58, MINECRAFT_1_20, false)
-                .mapping(0x58, MINECRAFT_1_19_4, false)
-                .mapping(0x54, MINECRAFT_1_19_3, false)
-                .mapping(0x56, MINECRAFT_1_19_1, false)
-                .mapping(0x53, MINECRAFT_1_19, false)
                 .mapping(0x53, MINECRAFT_1_18_2, false)
+                .mapping(0x53, MINECRAFT_1_19, false)
+                .mapping(0x56, MINECRAFT_1_19_1, false)
+                .mapping(0x54, MINECRAFT_1_19_3, false)
+                .mapping(0x58, MINECRAFT_1_19_4, false)
+                .mapping(0x58, MINECRAFT_1_20, false)
+                .mapping(0x5A, MINECRAFT_1_20_2, false)
                 .register();
     }
 

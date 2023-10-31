@@ -8,8 +8,8 @@ import com.velocitypowered.proxy.protocol.StateRegistry;
 import io.netty.buffer.ByteBuf;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import timongcraft.veloboard.utils.NamedTextColorUtils;
 import timongcraft.veloboard.network.PacketRegistration;
+import timongcraft.veloboard.utils.NamedTextColorUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,13 +26,14 @@ public class UpdateTeamsPacket implements MinecraftPacket {
                 .direction(ProtocolUtils.Direction.CLIENTBOUND)
                 .packetSupplier(UpdateTeamsPacket::new)
                 .stateRegistry(StateRegistry.PLAY)
-                .mapping(0x5C, MINECRAFT_1_20_2, false)
-                .mapping(0x5A, MINECRAFT_1_20, false)
-                .mapping(0x5A, MINECRAFT_1_19_4, false)
-                .mapping(0x56, MINECRAFT_1_19_3, false)
-                .mapping(0x58, MINECRAFT_1_19_1, false)
-                .mapping(0x55, MINECRAFT_1_19, false)
                 .mapping(0x55, MINECRAFT_1_18_2, false)
+                .mapping(0x55, MINECRAFT_1_19, false)
+                .mapping(0x58, MINECRAFT_1_19_1, false)
+                .mapping(0x5C, MINECRAFT_1_20_2, false)
+                .mapping(0x56, MINECRAFT_1_19_3, false)
+                .mapping(0x5A, MINECRAFT_1_19_4, false)
+                .mapping(0x5A, MINECRAFT_1_20, false)
+                .mapping(0x5C, MINECRAFT_1_20_2, false)
                 .register();
     }
 

@@ -18,13 +18,13 @@ public class UpdateScorePacket implements MinecraftPacket {
                 .direction(ProtocolUtils.Direction.CLIENTBOUND)
                 .packetSupplier(UpdateScorePacket::new)
                 .stateRegistry(StateRegistry.PLAY)
-                .mapping(0x5D, MINECRAFT_1_20_2, false)
-                .mapping(0x5B, MINECRAFT_1_20, false)
-                .mapping(0x5B, MINECRAFT_1_19_4, false)
-                .mapping(0x57, MINECRAFT_1_19_3, false)
-                .mapping(0x59, MINECRAFT_1_19_1, false)
-                .mapping(0x56, MINECRAFT_1_19, false)
                 .mapping(0x56, MINECRAFT_1_18_2, false)
+                .mapping(0x56, MINECRAFT_1_19, false)
+                .mapping(0x59, MINECRAFT_1_19_1, false)
+                .mapping(0x57, MINECRAFT_1_19_3, false)
+                .mapping(0x5B, MINECRAFT_1_19_4, false)
+                .mapping(0x5B, MINECRAFT_1_20, false)
+                .mapping(0x5D, MINECRAFT_1_20_2, false)
                 .register();
     }
 
