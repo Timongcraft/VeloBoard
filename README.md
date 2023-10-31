@@ -2,7 +2,7 @@
 
 Scoreboard API for Velocity plugins (1.18.2-1.20.2)
 
-⚠️ To use VeloBoard first read [Register Packets](#registering-packets)!
+⚠️ After installing first read [Register Packets](#registering-packets)!
 
 ## Features
 
