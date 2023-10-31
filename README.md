@@ -1,7 +1,5 @@
 # VeloBoard
 
-![](https://img.shields.io/maven-central/v/io.github.timongcraft/veloboards?style=flat-square)
-
 Scoreboard API for Velocity plugins (1.18.2-1.20.2)
 
 ⚠️ To use VeloBoard first read [Register Packets](#registering-packets)!
@@ -53,10 +51,11 @@ Scoreboard API for Velocity plugins (1.18.2-1.20.2)
     <dependency>
         <groupId>timongcraft.veloboard</groupId>
         <artifactId>VeloBoard</artifactId>
-        <version>1.0.0</version>
+        <version>CURRENT_VERSION</version>
     </dependency>
 </dependencies>
 ```
+Note: You can find the current version [here](https://github.com/Timongcraft/VeloBoard/packages/1977082).
 
 When using Maven, make sure to build directly with Maven and not with your IDE configuration (on IntelliJ IDEA: in the `Maven` tab on the right, in `Lifecycle`, use `package`).
 
