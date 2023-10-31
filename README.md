@@ -2,8 +2,6 @@
 
 ![](https://img.shields.io/maven-central/v/io.github.timongcraft/veloboards?style=flat-square)
 
-⚠️ Not yet uploaded to any maven repository
-
 Scoreboard API for Velocity plugins (1.18.2-1.20.2)
 
 ⚠️ To use VeloBoard first read [Register Packets](#registering-packets)!
@@ -20,6 +18,9 @@ Scoreboard API for Velocity plugins (1.18.2-1.20.2)
 ## Getting started
 
 ### Maven
+
+⚠️ Make sure you can access GitHub Packages. You can find a guide [here](https://gist.github.com/Timongcraft/69ddbe39b894b819e93296339141b844)
+
 ```xml
 <build>
     <plugins>
@@ -60,6 +61,8 @@ Scoreboard API for Velocity plugins (1.18.2-1.20.2)
 When using Maven, make sure to build directly with Maven and not with your IDE configuration (on IntelliJ IDEA: in the `Maven` tab on the right, in `Lifecycle`, use `package`).
 
 ### Gradle
+
+⚠️ Make sure you can access GitHub Packages.
 
 ```groovy
 plugins {
