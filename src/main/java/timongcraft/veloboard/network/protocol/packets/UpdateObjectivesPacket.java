@@ -5,9 +5,9 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
+import io.github._4drian3d.vpacketevents.api.register.PacketRegistration;
 import io.netty.buffer.ByteBuf;
 import net.kyori.adventure.text.Component;
-import timongcraft.veloboard.network.PacketRegistration;
 
 import static com.velocitypowered.api.network.ProtocolVersion.*;
 
@@ -34,7 +34,8 @@ public class UpdateObjectivesPacket implements MinecraftPacket {
     private Component objectiveValue;
     private Type type;
 
-    public UpdateObjectivesPacket() {}
+    public UpdateObjectivesPacket() {
+    }
 
     public UpdateObjectivesPacket(String objectiveName, Mode mode) {
         this(objectiveName, mode, null, null);

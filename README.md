@@ -100,7 +100,7 @@ Simply create a new `VeloBoard` and update the title and the lines:
 VeloBoard board = new VeloBoard(player);
 
 // Set the title
-board.updateTitle(Component.text("VeloBoard").color(NamedTextColor.DARK_BLUE));
+board.updateTitle(Component.text("VeloBoard").color(NamedTextColor.BLUE));
 
 // Change the lines
 board.updateLines(
@@ -142,7 +142,6 @@ import java.util.UUID;
 public class ExamplePlugin {
 
     private final ProxyServer server;
-
     private final Map<UUID, VeloBoard> boards = new HashMap<>();
 
     @Inject
@@ -152,6 +151,8 @@ public class ExamplePlugin {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
+        VeloBoardRegistry.register();
+
         server.getScheduler().buildTask(this, () -> {
             for (VeloBoard board : boards.values())
                 updateBoard(board);
@@ -163,8 +164,14 @@ public class ExamplePlugin {
         Player player = event.getPlayer();
 
         VeloBoard board = new VeloBoard(player);
-        board.updateTitle(Component.text("FastBoard").color(NamedTextColor.DARK_BLUE));
+        board.updateTitle(Component.text("VeloBoard").color(NamedTextColor.BLUE));
         boards.put(player.getUniqueId(), board);
+    }
+
+    @Subscribe
+    @SuppressWarnings("UnstableApiUsage")
+    public void onServerPostConnect(ServerPostConnectEvent event) {
+        boards.get(event.getPlayer().getUniqueId()).resend();
     }
 
     @Subscribe

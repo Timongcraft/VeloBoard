@@ -41,18 +41,22 @@ public class VeloBoard {
 
     private final Player player;
     private final String id;
-    private Component title = Component.empty();
+    private Component title;
     private final List<Component> lines = new ArrayList<>();
 
     private boolean deleted = false;
 
     public VeloBoard(Player player) {
-        this.player = player;
-        id = "sbsvb-" + Long.toHexString(LocalDateTime.now().toEpochSecond(OffsetDateTime.now().getOffset()));
-        initialize();
+        this(player, Component.empty());
     }
 
-    private void initialize() {
+    public VeloBoard(Player player, Component title) {
+        this.player = player;
+        this.title = title;
+        id = "velob-" + Long.toHexString(LocalDateTime.now().toEpochSecond(OffsetDateTime.now().getOffset()));
+    }
+
+    public void initialize() {
         sendObjectivePacket(UpdateObjectivesPacket.Mode.CREATE_SCOREBOARD);
         sendPacket(new DisplayObjectivePacket(1, id));
     }
@@ -89,6 +93,10 @@ public class VeloBoard {
         return lines.get(lineNumber);
     }
 
+    /**
+     * @see #updateLines(Component...)
+     * @see #updateLines(Collection)
+     */
     public synchronized void updateLine(int lineNumber, Component lineText) {
         checkLineNumber(lineNumber, false, true);
 
