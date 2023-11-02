@@ -53,7 +53,7 @@ public class VeloBoard {
     public VeloBoard(Player player, Component title) {
         this.player = player;
         this.title = title;
-        id = "sbsvb-" + Long.toHexString(LocalDateTime.now().toEpochSecond(OffsetDateTime.now().getOffset()));
+        id = "velob-" + Long.toHexString(LocalDateTime.now().toEpochSecond(OffsetDateTime.now().getOffset()));
     }
 
     public void initialize() {
@@ -93,6 +93,10 @@ public class VeloBoard {
         return lines.get(lineNumber);
     }
 
+    /**
+     * @see #updateLines(Component...)
+     * @see #updateLines(Collection)
+     */
     public synchronized void updateLine(int lineNumber, Component lineText) {
         checkLineNumber(lineNumber, false, true);
 
