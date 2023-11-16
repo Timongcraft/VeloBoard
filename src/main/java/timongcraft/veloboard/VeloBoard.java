@@ -258,19 +258,11 @@ public class VeloBoard {
     }
 
     public void delete() {
-        int i = 0;
+        for (int i = 0; i < this.lines.size(); ++i)
+            this.sendTeamPacket(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
 
-        while (true) {
-            if (i >= lines.size()) {
-                sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
-                break;
-            }
-
-            sendTeamPacket(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
-            ++i;
-        }
-
-        deleted = true;
+        this.sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
+        this.deleted = true;
     }
 
 }
