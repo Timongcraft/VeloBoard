@@ -7,8 +7,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import timongcraft.veloboard.network.protocol.packets.*;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.*;
 
 @SuppressWarnings("unused")
@@ -53,7 +51,7 @@ public class VeloBoard {
     public VeloBoard(Player player, Component title) {
         this.player = player;
         this.title = title;
-        id = "velob-" + Long.toHexString(LocalDateTime.now().toEpochSecond(OffsetDateTime.now().getOffset()));
+        id = "velob-" + player.getUniqueId() + ":" + System.currentTimeMillis();
     }
 
     public void initialize() {
