@@ -33,7 +33,8 @@ public class UpdateTeamsPacket implements MinecraftPacket {
                 .mapping(0x56, MINECRAFT_1_19_3, false)
                 .mapping(0x5A, MINECRAFT_1_19_4, false)
                 .mapping(0x5A, MINECRAFT_1_20, false)
-                .mapping(0x5E, MINECRAFT_1_20_2, false)
+                .mapping(0x5C, MINECRAFT_1_20_2, false)
+                .mapping(0x5E, MINECRAFT_1_20_3, false)
                 .register();
     }
 
