@@ -5,6 +5,7 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
+import com.velocitypowered.proxy.protocol.packet.chat.ComponentHolder;
 import io.github._4drian3d.vpacketevents.api.register.PacketRegistration;
 import io.netty.buffer.ByteBuf;
 import net.kyori.adventure.text.Component;
@@ -32,7 +33,7 @@ public class UpdateTeamsPacket implements MinecraftPacket {
                 .mapping(0x56, MINECRAFT_1_19_3, false)
                 .mapping(0x5A, MINECRAFT_1_19_4, false)
                 .mapping(0x5A, MINECRAFT_1_20, false)
-                .mapping(0x5C, MINECRAFT_1_20_2, false)
+                .mapping(0x5E, MINECRAFT_1_20_2, false)
                 .register();
     }
 
@@ -72,7 +73,7 @@ public class UpdateTeamsPacket implements MinecraftPacket {
         mode = Mode.values()[buffer.readByte()];
 
         if (mode == Mode.CREATE_TEAM || mode == Mode.UPDATE_TEAM_INFO) {
-            teamDisplayName = ProtocolUtils.getJsonChatSerializer(protocolVersion).deserialize(ProtocolUtils.readString(buffer));
+            teamDisplayName = ComponentHolder.read(buffer, protocolVersion).getComponent();
             int flagsBitmask = buffer.readUnsignedByte();
             friendlyFlags = new ArrayList<>();
             for (FriendlyFlags flag : FriendlyFlags.values()) {
@@ -82,8 +83,8 @@ public class UpdateTeamsPacket implements MinecraftPacket {
             nameTagVisibility = NameTagVisibility.get(ProtocolUtils.readString(buffer));
             collisionRule = CollisionRule.get(ProtocolUtils.readString(buffer));
             teamColor = NamedTextColorUtils.getNamedTextColorById(ProtocolUtils.readVarInt(buffer));
-            teamPrefix = ProtocolUtils.getJsonChatSerializer(protocolVersion).deserialize(ProtocolUtils.readString(buffer));
-            teamSuffix = ProtocolUtils.getJsonChatSerializer(protocolVersion).deserialize(ProtocolUtils.readString(buffer));
+            teamPrefix = ComponentHolder.read(buffer, protocolVersion).getComponent();
+            teamSuffix = ComponentHolder.read(buffer, protocolVersion).getComponent();
         }
 
         if (mode == Mode.CREATE_TEAM || mode == Mode.ADD_ENTITIES || mode == Mode.REMOVE_ENTITIES) {
@@ -102,7 +103,7 @@ public class UpdateTeamsPacket implements MinecraftPacket {
         buffer.writeByte(mode.ordinal());
 
         if (mode == Mode.CREATE_TEAM || mode == Mode.UPDATE_TEAM_INFO) {
-            ProtocolUtils.writeString(buffer, ProtocolUtils.getJsonChatSerializer(protocolVersion).serialize(teamDisplayName));
+            new ComponentHolder(protocolVersion, teamDisplayName).write(buffer);
             int flagsBitmask = 0;
             for (FriendlyFlags flag : friendlyFlags)
                 flagsBitmask |= flag.getBitmask();
@@ -116,8 +117,8 @@ public class UpdateTeamsPacket implements MinecraftPacket {
                 throw new IllegalStateException("collision rule can only be 32 chars long");
             ProtocolUtils.writeString(buffer, collisionRuleKey);
             ProtocolUtils.writeVarInt(buffer, NamedTextColorUtils.getIdByNamedTextColor(teamColor));
-            ProtocolUtils.writeString(buffer, ProtocolUtils.getJsonChatSerializer(protocolVersion).serialize(teamPrefix));
-            ProtocolUtils.writeString(buffer, ProtocolUtils.getJsonChatSerializer(protocolVersion).serialize(teamSuffix));
+            new ComponentHolder(protocolVersion, teamPrefix).write(buffer);
+            new ComponentHolder(protocolVersion, teamSuffix).write(buffer);
         }
 
         if (mode == Mode.CREATE_TEAM || mode == Mode.ADD_ENTITIES || mode == Mode.REMOVE_ENTITIES) {

@@ -25,6 +25,7 @@ public class DisplayObjectivePacket implements MinecraftPacket {
                 .mapping(0x51, MINECRAFT_1_19_4, false)
                 .mapping(0x51, MINECRAFT_1_20, false)
                 .mapping(0x53, MINECRAFT_1_20_2, false)
+                .mapping(0x55, MINECRAFT_1_20_3, false)
                 .register();
     }
 

@@ -5,41 +5,27 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import timongcraft.veloboard.network.protocol.packets.*;
+import timongcraft.veloboard.network.protocol.ComponentUtils;
+import timongcraft.veloboard.network.protocol.packets.DisplayObjectivePacket;
+import timongcraft.veloboard.network.protocol.packets.UpdateObjectivesPacket;
+import timongcraft.veloboard.network.protocol.packets.UpdateScorePacket;
+import timongcraft.veloboard.network.protocol.packets.UpdateTeamsPacket;
+import timongcraft.veloboard.utils.annotations.Since;
 
 import java.util.*;
+
+import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_20_3;
 
 @SuppressWarnings("unused")
 public class VeloBoard {
 
-    protected static final String[] COLOR_CODES = {
-            "§0", // BLACK
-            "§1", // DARK_BLUE
-            "§2", // DARK_GREEN
-            "§3", // DARK_AQUA
-            "§4", // DARK_RED
-            "§5", // DARK_PURPLE
-            "§6", // GOLD
-            "§7", // GRAY
-            "§8", // DARK_GRAY
-            "§9", // BLUE
-            "§a", // GREEN
-            "§b", // AQUA
-            "§c", // RED
-            "§d", // LIGHT_PURPLE
-            "§e", // YELLOW
-            "§f", // WHITE
-            "§k", // OBFUSCATED
-            "§l", // BOLD
-            "§m", // STRIKETHROUGH
-            "§n", // UNDERLINE
-            "§o", // ITALIC
-            "§r"  // RESET
-    };
+    protected static final String[] COLOR_CODES = {"§0", "§1", "§2", "§3", "§4", "§5", "§6", "§7", "§8", "§9", "§a", "§b", "§c", "§d", "§e", "§f", "§k", "§l", "§m", "§n", "§o", "§r"};
 
     private final Player player;
     private final String id;
     private Component title;
+    @Since(MINECRAFT_1_20_3)
+    private ComponentUtils.NumberFormat numberFormat;
     private final List<Component> lines = new ArrayList<>();
 
     private boolean deleted = false;
@@ -51,7 +37,16 @@ public class VeloBoard {
     public VeloBoard(Player player, Component title) {
         this.player = player;
         this.title = title;
-        id = "velob-" + player.getUniqueId() + ":" + System.currentTimeMillis();
+        this.id = "velob-" + player.getUniqueId() + ":" + System.currentTimeMillis();
+    }
+
+    @Since(MINECRAFT_1_20_3)
+    public VeloBoard(Player player, Component title, ComponentUtils.NumberFormat numberFormat) {
+        this.player = player;
+        this.title = title;
+        if (numberFormat != null)
+            this.numberFormat = numberFormat;
+        this.id = "velob-" + player.getUniqueId() + ":" + System.currentTimeMillis();
     }
 
     public void initialize() {
@@ -78,6 +73,18 @@ public class VeloBoard {
 
     public void updateTitle(Component title) {
         this.title = title;
+
+        sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
+    }
+
+    @Since(MINECRAFT_1_20_3)
+    public ComponentUtils.NumberFormat getNumberFormat() {
+        return numberFormat;
+    }
+
+    @Since(MINECRAFT_1_20_3)
+    public void setNumberFormat(ComponentUtils.NumberFormat numberFormat) {
+        this.numberFormat = numberFormat;
 
         sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
     }
@@ -189,12 +196,21 @@ public class VeloBoard {
 
     private void sendObjectivePacket(UpdateObjectivesPacket.Mode mode) {
         sendPacket(
-                new UpdateObjectivesPacket(
-                        id,
-                        mode,
-                        title,
-                        UpdateObjectivesPacket.Type.INTEGER
-                )
+                (numberFormat == null || player.getProtocolVersion().compareTo(MINECRAFT_1_20_3) < 0) ?
+                        new UpdateObjectivesPacket(
+                                id,
+                                mode,
+                                title,
+                                UpdateObjectivesPacket.Type.INTEGER
+                        )
+                        :
+                        new UpdateObjectivesPacket(
+                                id,
+                                mode,
+                                title,
+                                UpdateObjectivesPacket.Type.INTEGER,
+                                numberFormat
+                        )
         );
     }
 

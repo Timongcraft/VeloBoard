@@ -5,9 +5,12 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
+import com.velocitypowered.proxy.protocol.packet.chat.ComponentHolder;
 import io.github._4drian3d.vpacketevents.api.register.PacketRegistration;
 import io.netty.buffer.ByteBuf;
 import net.kyori.adventure.text.Component;
+import timongcraft.veloboard.network.protocol.ComponentUtils;
+import timongcraft.veloboard.utils.annotations.Since;
 
 import static com.velocitypowered.api.network.ProtocolVersion.*;
 
@@ -26,6 +29,7 @@ public class UpdateObjectivesPacket implements MinecraftPacket {
                 .mapping(0x58, MINECRAFT_1_19_4, false)
                 .mapping(0x58, MINECRAFT_1_20, false)
                 .mapping(0x5A, MINECRAFT_1_20_2, false)
+                .mapping(0x5C, MINECRAFT_1_20_3, false)
                 .register();
     }
 
@@ -33,6 +37,10 @@ public class UpdateObjectivesPacket implements MinecraftPacket {
     private Mode mode;
     private Component objectiveValue;
     private Type type;
+    @Since(MINECRAFT_1_20_3)
+    private boolean hasNumberFormat;
+    @Since(MINECRAFT_1_20_3)
+    private ComponentUtils.NumberFormat numberFormat;
 
     public UpdateObjectivesPacket() {
     }
@@ -48,13 +56,36 @@ public class UpdateObjectivesPacket implements MinecraftPacket {
         this.type = type;
     }
 
+    @Since(MINECRAFT_1_20_3)
+    public UpdateObjectivesPacket(String objectiveName, Mode mode, Component objectiveValue, Type type, ComponentUtils.NumberFormat numberFormat) {
+        this.objectiveName = objectiveName;
+        this.mode = mode;
+        this.objectiveValue = objectiveValue;
+        this.type = type;
+        if (numberFormat != null) {
+            this.hasNumberFormat = true;
+            this.numberFormat = numberFormat;
+        }
+    }
+
     @Override
     public void decode(ByteBuf buffer, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
         objectiveName = ProtocolUtils.readString(buffer);
         mode = Mode.values()[buffer.readByte()];
         if (mode != Mode.REMOVE_SCOREBOARD) {
-            objectiveValue = ProtocolUtils.getJsonChatSerializer(protocolVersion).deserialize(ProtocolUtils.readString(buffer));
+            objectiveValue = ComponentHolder.read(buffer, protocolVersion).getComponent();
             type = Type.values()[ProtocolUtils.readVarInt(buffer)];
+            if (protocolVersion.compareTo(MINECRAFT_1_20_2) > 0) {
+                hasNumberFormat = buffer.readBoolean();
+                if (hasNumberFormat) {
+                    numberFormat = switch (ProtocolUtils.readVarInt(buffer)) {
+                        case 0 -> ComponentUtils.NumberFormatBlank.getInstance();
+                        case 2 -> new ComponentUtils.NumberFormatFixed(ComponentHolder.read(buffer, protocolVersion));
+                        default ->
+                                throw new IllegalStateException("Invalid number format: " + ProtocolUtils.readVarInt(buffer));
+                    };
+                }
+            }
         }
     }
 
@@ -65,8 +96,17 @@ public class UpdateObjectivesPacket implements MinecraftPacket {
         ProtocolUtils.writeString(buffer, objectiveName);
         buffer.writeByte(mode.ordinal());
         if (mode != Mode.REMOVE_SCOREBOARD) {
-            ProtocolUtils.writeString(buffer, ProtocolUtils.getJsonChatSerializer(protocolVersion).serialize(objectiveValue));
+            new ComponentHolder(protocolVersion, objectiveValue).write(buffer);
             buffer.writeByte(type.ordinal());
+            if (protocolVersion.compareTo(MINECRAFT_1_20_2) > 0) {
+                buffer.writeBoolean(hasNumberFormat);
+                if (hasNumberFormat) {
+                    ProtocolUtils.writeVarInt(buffer, numberFormat.getType().ordinal());
+                    if (numberFormat instanceof ComponentUtils.NumberFormatFixed numberFormatFixed) {
+                        numberFormatFixed.getContent().write(buffer);
+                    }
+                }
+            }
         }
     }
 
@@ -105,6 +145,26 @@ public class UpdateObjectivesPacket implements MinecraftPacket {
 
     public void setType(Type type) {
         this.type = type;
+    }
+
+    @Since(MINECRAFT_1_20_3)
+    public boolean isHasNumberFormat() {
+        return hasNumberFormat;
+    }
+
+    @Since(MINECRAFT_1_20_3)
+    public void setHasNumberFormat(boolean hasNumberFormat) {
+        this.hasNumberFormat = hasNumberFormat;
+    }
+
+    @Since(MINECRAFT_1_20_3)
+    public ComponentUtils.NumberFormat getNumberFormat() {
+        return numberFormat;
+    }
+
+    @Since(MINECRAFT_1_20_3)
+    public void setNumberFormat(ComponentUtils.NumberFormat numberFormat) {
+        this.numberFormat = numberFormat;
     }
 
     public enum Mode {

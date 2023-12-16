@@ -4,7 +4,10 @@ import timongcraft.veloboard.network.protocol.packets.*;
 
 @SuppressWarnings("unused")
 public class VeloBoardRegistry {
+
+    //TODO: Add implementation for styled number format
     //TODO: Add java docs
+    //Decide on using ComponentHolder directly
 
     public static void register() {
         registerPackets();
