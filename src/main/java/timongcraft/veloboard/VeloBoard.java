@@ -5,12 +5,12 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import timongcraft.veloboard.network.protocol.ComponentUtils;
-import timongcraft.veloboard.network.protocol.packets.DisplayObjectivePacket;
-import timongcraft.veloboard.network.protocol.packets.UpdateObjectivesPacket;
-import timongcraft.veloboard.network.protocol.packets.UpdateScorePacket;
-import timongcraft.veloboard.network.protocol.packets.UpdateTeamsPacket;
-import timongcraft.veloboard.utils.annotations.Since;
+import timongcraft.velopacketimpl.network.protocol.packets.DisplayObjectivePacket;
+import timongcraft.velopacketimpl.network.protocol.packets.UpdateObjectivesPacket;
+import timongcraft.velopacketimpl.network.protocol.packets.UpdateScorePacket;
+import timongcraft.velopacketimpl.network.protocol.packets.UpdateTeamsPacket;
+import timongcraft.velopacketimpl.utils.ComponentUtils;
+import timongcraft.velopacketimpl.utils.annotations.Since;
 
 import java.util.*;
 

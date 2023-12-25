@@ -23,6 +23,27 @@
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <relocations>
+                        <relocation>
+                            <pattern>timongcraft.velopacketimpl</pattern>
+                            <shadedPattern>timongcraft.veloboard.velopacketimpl</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -39,10 +60,6 @@
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
         <repository>
-            <id>sonatype</id>
-            <url>https://oss.sonatype.org/content/groups/public/</url>
-        </repository>
-        <repository>
             <id>skyblocksquad-repo</id>
             <url>https://pt-node01.skyblocksquad.de:4002/repo</url>
         </repository>
@@ -57,20 +74,14 @@
         </dependency>
         <dependency>
             <groupId>com.velocitypowered</groupId>
-            <artifactId>velocity-native</artifactId>
-            <version>3.3.0-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.velocitypowered</groupId>
             <artifactId>velocity-proxy</artifactId>
             <version>3.3.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>io.github.4drian3d</groupId>
-            <artifactId>vpacketevents-api</artifactId>
-            <version>1.1.0</version>
+            <groupId>timongcraft</groupId>
+            <artifactId>velopacketimpl</artifactId>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
 
