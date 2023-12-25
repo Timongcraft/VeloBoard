@@ -55,8 +55,7 @@ public class VeloBoard {
     }
 
     public void resend() {
-        delete();
-        deleted = false;
+        clear();
 
         initialize();
         updateTitle(title);
@@ -271,11 +270,19 @@ public class VeloBoard {
         return lines.size();
     }
 
-    public void delete() {
+    public void clear() {
         for (int i = 0; i < this.lines.size(); ++i)
             this.sendTeamPacket(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
 
         this.sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
+    }
+
+    public void delete() {
+        clear();
+        title = null;
+        lines.clear();
+        numberFormat = null;
+
         this.deleted = true;
     }
 
