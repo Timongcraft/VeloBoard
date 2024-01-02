@@ -5,10 +5,7 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import timongcraft.velopacketimpl.network.protocol.packets.DisplayObjectivePacket;
-import timongcraft.velopacketimpl.network.protocol.packets.UpdateObjectivesPacket;
-import timongcraft.velopacketimpl.network.protocol.packets.UpdateScorePacket;
-import timongcraft.velopacketimpl.network.protocol.packets.UpdateTeamsPacket;
+import timongcraft.velopacketimpl.network.protocol.packets.*;
 import timongcraft.velopacketimpl.utils.ComponentUtils;
 import timongcraft.velopacketimpl.utils.annotations.Since;
 
@@ -195,32 +192,30 @@ public class VeloBoard {
 
     private void sendObjectivePacket(UpdateObjectivesPacket.Mode mode) {
         sendPacket(
-                (numberFormat == null || player.getProtocolVersion().compareTo(MINECRAFT_1_20_3) < 0) ?
-                        new UpdateObjectivesPacket(
-                                id,
-                                mode,
-                                title,
-                                UpdateObjectivesPacket.Type.INTEGER
-                        )
-                        :
-                        new UpdateObjectivesPacket(
-                                id,
-                                mode,
-                                title,
-                                UpdateObjectivesPacket.Type.INTEGER,
-                                numberFormat
-                        )
+                new UpdateObjectivesPacket(
+                        id,
+                        mode,
+                        title,
+                        UpdateObjectivesPacket.Type.INTEGER,
+                        numberFormat
+                )
         );
     }
 
     private void sendScorePacket(int score, UpdateScorePacket.Action action) {
         sendPacket(
-                new UpdateScorePacket(
-                        COLOR_CODES[score],
-                        action,
-                        id,
-                        score
-                )
+                action != UpdateScorePacket.Action.REMOVE_SCORE || player.getProtocolVersion().compareTo(MINECRAFT_1_20_3) < 0 ?
+                        new UpdateScorePacket(
+                                COLOR_CODES[score],
+                                action,
+                                id,
+                                score
+                        )
+                        :
+                        new ResetScorePacket(
+                                COLOR_CODES[score],
+                                id
+                        )
         );
     }
 

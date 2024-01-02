@@ -1,9 +1,6 @@
 package timongcraft.veloboard;
 
-import timongcraft.velopacketimpl.network.protocol.packets.DisplayObjectivePacket;
-import timongcraft.velopacketimpl.network.protocol.packets.UpdateObjectivesPacket;
-import timongcraft.velopacketimpl.network.protocol.packets.UpdateScorePacket;
-import timongcraft.velopacketimpl.network.protocol.packets.UpdateTeamsPacket;
+import timongcraft.velopacketimpl.network.protocol.packets.*;
 
 @SuppressWarnings("unused")
 public class VeloBoardRegistry {
@@ -18,6 +15,7 @@ public class VeloBoardRegistry {
         DisplayObjectivePacket.register(true);
         UpdateObjectivesPacket.register(true);
         UpdateScorePacket.register(true);
+        ResetScorePacket.register(true);
         UpdateTeamsPacket.register(true);
     }
 
