@@ -6,7 +6,7 @@
 
     <groupId>timongcraft</groupId>
     <artifactId>veloboard</artifactId>
-    <version>1.0.2</version>
+    <version>1.1.0</version>
 
     <properties>
         <java.version>17</java.version>
@@ -18,19 +18,54 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.12.1</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <relocations>
+                        <relocation>
+                            <pattern>timongcraft.velopacketimpl</pattern>
+                            <shadedPattern>timongcraft.veloboard.velopacketimpl</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
 
     <distributionManagement>
         <repository>
-            <id>github</id>
-            <name>GitHub Timongcraft Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/timongcraft/veloboard</url>
+            <id>skyblocksquad-repo</id>
+            <url>https://repo.skyblocksquad.de/repo</url>
         </repository>
     </distributionManagement>
 
@@ -40,8 +75,12 @@
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
         <repository>
-            <id>Elytrium</id>
-            <url>https://maven.elytrium.net/repo/</url>
+            <id>oss.sonatype.org-snapshot</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+        <repository>
+            <id>skyblocksquad-repo</id>
+            <url>https://repo.skyblocksquad.de/repo</url>
         </repository>
     </repositories>
 
@@ -49,25 +88,19 @@
         <dependency>
             <groupId>com.velocitypowered</groupId>
             <artifactId>velocity-api</artifactId>
-            <version>3.2.0-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.velocitypowered</groupId>
-            <artifactId>velocity-native</artifactId>
-            <version>3.2.0-SNAPSHOT</version>
+            <version>3.3.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.velocitypowered</groupId>
             <artifactId>velocity-proxy</artifactId>
-            <version>3.2.0-SNAPSHOT</version>
+            <version>3.3.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>io.github.4drian3d</groupId>
-            <artifactId>vpacketevents-api</artifactId>
-            <version>1.1.0</version>
+            <groupId>timongcraft</groupId>
+            <artifactId>velopacketimpl</artifactId>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
 

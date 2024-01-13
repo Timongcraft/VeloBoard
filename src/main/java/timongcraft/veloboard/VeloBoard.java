@@ -5,43 +5,24 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import timongcraft.veloboard.network.protocol.packets.*;
+import timongcraft.velopacketimpl.network.protocol.packets.*;
+import timongcraft.velopacketimpl.utils.ComponentUtils;
+import timongcraft.velopacketimpl.utils.annotations.Since;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.*;
+
+import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_20_3;
 
 @SuppressWarnings("unused")
 public class VeloBoard {
 
-    protected static final String[] COLOR_CODES = {
-            "§0", // BLACK
-            "§1", // DARK_BLUE
-            "§2", // DARK_GREEN
-            "§3", // DARK_AQUA
-            "§4", // DARK_RED
-            "§5", // DARK_PURPLE
-            "§6", // GOLD
-            "§7", // GRAY
-            "§8", // DARK_GRAY
-            "§9", // BLUE
-            "§a", // GREEN
-            "§b", // AQUA
-            "§c", // RED
-            "§d", // LIGHT_PURPLE
-            "§e", // YELLOW
-            "§f", // WHITE
-            "§k", // OBFUSCATED
-            "§l", // BOLD
-            "§m", // STRIKETHROUGH
-            "§n", // UNDERLINE
-            "§o", // ITALIC
-            "§r"  // RESET
-    };
+    protected static final String[] COLOR_CODES = {"§0", "§1", "§2", "§3", "§4", "§5", "§6", "§7", "§8", "§9", "§a", "§b", "§c", "§d", "§e", "§f", "§k", "§l", "§m", "§n", "§o", "§r"};
 
     private final Player player;
     private final String id;
     private Component title;
+    @Since(MINECRAFT_1_20_3)
+    private ComponentUtils.NumberFormat numberFormat;
     private final List<Component> lines = new ArrayList<>();
 
     private boolean deleted = false;
@@ -53,7 +34,16 @@ public class VeloBoard {
     public VeloBoard(Player player, Component title) {
         this.player = player;
         this.title = title;
-        id = "velob-" + Long.toHexString(LocalDateTime.now().toEpochSecond(OffsetDateTime.now().getOffset()));
+        this.id = "velob-" + player.getUniqueId() + ":" + System.currentTimeMillis();
+    }
+
+    @Since(MINECRAFT_1_20_3)
+    public VeloBoard(Player player, Component title, ComponentUtils.NumberFormat numberFormat) {
+        this.player = player;
+        this.title = title;
+        if (numberFormat != null)
+            this.numberFormat = numberFormat;
+        this.id = "velob-" + player.getUniqueId() + ":" + System.currentTimeMillis();
     }
 
     public void initialize() {
@@ -62,8 +52,7 @@ public class VeloBoard {
     }
 
     public void resend() {
-        delete();
-        deleted = false;
+        clear();
 
         initialize();
         updateTitle(title);
@@ -80,6 +69,18 @@ public class VeloBoard {
 
     public void updateTitle(Component title) {
         this.title = title;
+
+        sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
+    }
+
+    @Since(MINECRAFT_1_20_3)
+    public ComponentUtils.NumberFormat getNumberFormat() {
+        return numberFormat;
+    }
+
+    @Since(MINECRAFT_1_20_3)
+    public void setNumberFormat(ComponentUtils.NumberFormat numberFormat) {
+        this.numberFormat = numberFormat;
 
         sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
     }
@@ -195,19 +196,26 @@ public class VeloBoard {
                         id,
                         mode,
                         title,
-                        UpdateObjectivesPacket.Type.INTEGER
+                        UpdateObjectivesPacket.Type.INTEGER,
+                        numberFormat
                 )
         );
     }
 
     private void sendScorePacket(int score, UpdateScorePacket.Action action) {
         sendPacket(
-                new UpdateScorePacket(
-                        COLOR_CODES[score],
-                        action,
-                        id,
-                        score
-                )
+                action != UpdateScorePacket.Action.REMOVE_SCORE || player.getProtocolVersion().compareTo(MINECRAFT_1_20_3) < 0 ?
+                        new UpdateScorePacket(
+                                COLOR_CODES[score],
+                                action,
+                                id,
+                                score
+                        )
+                        :
+                        new ResetScorePacket(
+                                COLOR_CODES[score],
+                                id
+                        )
         );
     }
 
@@ -257,20 +265,20 @@ public class VeloBoard {
         return lines.size();
     }
 
+    public void clear() {
+        for (int i = 0; i < this.lines.size(); ++i)
+            this.sendTeamPacket(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
+
+        this.sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
+    }
+
     public void delete() {
-        int i = 0;
+        clear();
+        title = null;
+        lines.clear();
+        numberFormat = null;
 
-        while (true) {
-            if (i >= lines.size()) {
-                sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
-                break;
-            }
-
-            sendTeamPacket(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
-            ++i;
-        }
-
-        deleted = true;
+        this.deleted = true;
     }
 
 }

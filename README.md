@@ -14,10 +14,9 @@ Scoreboard API for Velocity plugins (1.18.2-1.20.2)
 * Can be used asynchronously
 
 ## Getting started
+Note: You can find the current version [here](https://pt-node01.skyblocksquad.de:4002/#/repo/timongcraft/veloboard).
 
 ### Maven
-
-⚠️ Make sure you can access GitHub Packages. You can find a guide [here](https://gist.github.com/Timongcraft/69ddbe39b894b819e93296339141b844)
 
 ```xml
 <build>
@@ -47,6 +46,13 @@ Scoreboard API for Velocity plugins (1.18.2-1.20.2)
     </plugins>
 </build>
 
+<repositories>
+    <repository>
+        <id>skyblocksquad</id>
+        <url>https://pt-node01.skyblocksquad.de:4002/<repository></url>
+    </repository>
+</repositories>
+
 <dependencies>
     <dependency>
         <groupId>timongcraft.veloboard</groupId>
@@ -55,13 +61,10 @@ Scoreboard API for Velocity plugins (1.18.2-1.20.2)
     </dependency>
 </dependencies>
 ```
-Note: You can find the current version [here](https://github.com/Timongcraft/VeloBoard/packages/1977082).
 
 When using Maven, make sure to build directly with Maven and not with your IDE configuration (on IntelliJ IDEA: in the `Maven` tab on the right, in `Lifecycle`, use `package`).
 
 ### Gradle
-
-⚠️ Make sure you can access GitHub Packages.
 
 ```groovy
 plugins {
@@ -69,11 +72,13 @@ plugins {
 }
 
 repositories {
-    mavenCentral()
+    maven {
+        url "https://pt-node01.skyblocksquad.de:4002/repo"
+    }
 }
 
 dependencies {
-    implementation 'timongcraft:veloboard:1.0.0'
+    implementation 'timongcraft:veloboard:CURRENT_VERSION'
 }
 
 shadowJar {
