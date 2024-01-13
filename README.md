@@ -49,7 +49,7 @@ Note: You can find the current version [here](https://pt-node01.skyblocksquad.de
 <repositories>
     <repository>
         <id>skyblocksquad</id>
-        <url>https://pt-node01.skyblocksquad.de:4002/<repository></url>
+        <url>https://repo.skyblocksquad.de/repo<repository></url>
     </repository>
 </repositories>
 
@@ -73,7 +73,7 @@ plugins {
 
 repositories {
     maven {
-        url "https://pt-node01.skyblocksquad.de:4002/repo"
+        url "https://repo.skyblocksquad.de/repo"
     }
 }
 
