@@ -1,12 +1,12 @@
 # VeloBoard
 
-Scoreboard API for Velocity plugins (1.18.2-1.20.2)
+Scoreboard API for Velocity plugins (1.18.2-1.20.4)
 
 ⚠️ After installing first read [Register Packets](#registering-packets)!
 
 ## Features
 
-* Works from version 1.18.2 to 1.20.2
+* Works from version 1.18.2 to 1.20.4
 * Pretty small
 * Easy to use
 * Integrates [Adventure](https://github.com/KyoriPowered/adventure)
