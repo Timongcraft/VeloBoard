@@ -75,6 +75,10 @@
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
         <repository>
+            <id>oss.sonatype.org-snapshot</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+        <repository>
             <id>skyblocksquad-repo</id>
             <url>https://repo.skyblocksquad.de/repo</url>
         </repository>
