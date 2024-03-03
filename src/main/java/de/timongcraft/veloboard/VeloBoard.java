@@ -5,9 +5,9 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import timongcraft.velopacketimpl.network.protocol.packets.*;
-import timongcraft.velopacketimpl.utils.ComponentUtils;
-import timongcraft.velopacketimpl.utils.annotations.Since;
+import de.timongcraft.velopacketimpl.network.protocol.packets.*;
+import de.timongcraft.velopacketimpl.utils.ComponentUtils;
+import de.timongcraft.velopacketimpl.utils.annotations.Since;
 
 import java.util.*;
 

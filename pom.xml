@@ -94,8 +94,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>timongcraft</groupId>
-            <artifactId>velopacketimpl</artifactId>
+            <groupId>de.timongcraft</groupId>
+            <artifactId>VeloPacketImpl</artifactId>
             <version>1.0.0</version>
         </dependency>
     </dependencies>

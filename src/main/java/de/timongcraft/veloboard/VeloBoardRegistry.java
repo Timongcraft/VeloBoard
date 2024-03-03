@@ -1,6 +1,6 @@
 package de.timongcraft.veloboard;
 
-import timongcraft.velopacketimpl.network.protocol.packets.*;
+import de.timongcraft.velopacketimpl.network.protocol.packets.*;
 
 @SuppressWarnings("unused")
 public class VeloBoardRegistry {
