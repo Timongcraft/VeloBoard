@@ -1,4 +1,4 @@
-package timongcraft.veloboard;
+package de.timongcraft.veloboard;
 
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -16,6 +16,7 @@ import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_20_3;
 @SuppressWarnings("unused")
 public class VeloBoard {
 
+    public static final String VELOBOARD_ID = "veloboard";
     protected static final String[] COLOR_CODES = {"§0", "§1", "§2", "§3", "§4", "§5", "§6", "§7", "§8", "§9", "§a", "§b", "§c", "§d", "§e", "§f", "§k", "§l", "§m", "§n", "§o", "§r"};
 
     private final Player player;
@@ -34,7 +35,7 @@ public class VeloBoard {
     public VeloBoard(Player player, Component title) {
         this.player = player;
         this.title = title;
-        this.id = "velob-" + player.getUniqueId() + ":" + System.currentTimeMillis();
+        this.id = VELOBOARD_ID;
     }
 
     @Since(MINECRAFT_1_20_3)
@@ -43,7 +44,7 @@ public class VeloBoard {
         this.title = title;
         if (numberFormat != null)
             this.numberFormat = numberFormat;
-        this.id = "velob-" + player.getUniqueId() + ":" + System.currentTimeMillis();
+        this.id = VELOBOARD_ID;
     }
 
     public void initialize() {
@@ -204,7 +205,7 @@ public class VeloBoard {
 
     private void sendScorePacket(int score, UpdateScorePacket.Action action) {
         sendPacket(
-                action != UpdateScorePacket.Action.REMOVE_SCORE || player.getProtocolVersion().compareTo(MINECRAFT_1_20_3) < 0 ?
+                action != UpdateScorePacket.Action.REMOVE_SCORE || player.getProtocolVersion().getProtocol() < MINECRAFT_1_20_3.getProtocol() ?
                         new UpdateScorePacket(
                                 COLOR_CODES[score],
                                 action,

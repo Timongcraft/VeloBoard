@@ -1,4 +1,4 @@
-package timongcraft.veloboard;
+package de.timongcraft.veloboard;
 
 import timongcraft.velopacketimpl.network.protocol.packets.*;
 
