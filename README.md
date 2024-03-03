@@ -55,7 +55,7 @@ Note: You can find the current version [here](https://repo.skyblocksquad.de/#/re
 
 <dependencies>
     <dependency>
-        <groupId>timongcraft.veloboard</groupId>
+        <groupId>de.timongcraft</groupId>
         <artifactId>VeloBoard</artifactId>
         <version>CURRENT_VERSION</version>
     </dependency>

@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>de.timongcraft</groupId>
-    <artifactId>veloboard</artifactId>
+    <artifactId>VeloBoard</artifactId>
     <version>1.1.0</version>
 
     <properties>
