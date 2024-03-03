@@ -14,7 +14,7 @@ Scoreboard API for Velocity plugins (1.18.2-1.20.4)
 * Can be used asynchronously
 
 ## Getting started
-Note: You can find the current version [here](https://pt-node01.skyblocksquad.de:4002/#/repo/timongcraft/veloboard).
+Note: You can find the current version [here](https://repo.skyblocksquad.de/#/repo/timongcraft/veloboard).
 
 ### Maven
 
@@ -24,7 +24,7 @@ Note: You can find the current version [here](https://pt-node01.skyblocksquad.de
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
-            <version>3.5.1</version>
+            <version>3.5.2</version>
             <executions>
                 <execution>
                     <phase>package</phase>
