@@ -3,11 +3,11 @@ package de.timongcraft.veloboard;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import de.timongcraft.velopacketimpl.network.protocol.packets.*;
 import de.timongcraft.velopacketimpl.utils.ComponentUtils;
 import de.timongcraft.velopacketimpl.utils.annotations.Since;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.*;
 
@@ -196,7 +196,7 @@ public class VeloBoard {
                 new UpdateObjectivesPacket(
                         id,
                         mode,
-                        title,
+                        translateComponent(title),
                         UpdateObjectivesPacket.Type.INTEGER,
                         numberFormat
                 )
@@ -234,8 +234,8 @@ public class VeloBoard {
                         UpdateTeamsPacket.NameTagVisibility.ALWAYS,
                         UpdateTeamsPacket.CollisionRule.ALWAYS,
                         NamedTextColor.WHITE,
-                        prefix,
-                        suffix,
+                        translateComponent(prefix),
+                        translateComponent(suffix),
                         Collections.singletonList(COLOR_CODES[score])
                 )
         );
@@ -248,6 +248,10 @@ public class VeloBoard {
             if (player.isActive())
                 ((ConnectedPlayer) player).getConnection().write(packet);
         }
+    }
+
+    public Component translateComponent(Component component) {
+        return ((ConnectedPlayer) player).translateMessage(component);
     }
 
     public Player getPlayer() {
