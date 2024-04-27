@@ -1,12 +1,12 @@
 # VeloBoard
 
-Scoreboard API for Velocity plugins (1.18.2-1.20.4)
+Scoreboard API for Velocity plugins (1.18.2-1.20.5)
 
 ⚠️ After installing first read [Register Packets](#registering-packets)!
 
 ## Features
 
-* Works from version 1.18.2 to 1.20.4
+* Works from version 1.18.2 to 1.20.5
 * Pretty small
 * Easy to use
 * Integrates [Adventure](https://github.com/KyoriPowered/adventure)
@@ -14,7 +14,7 @@ Scoreboard API for Velocity plugins (1.18.2-1.20.4)
 * Can be used asynchronously
 
 ## Getting started
-Note: You can find the current version [here](https://repo.skyblocksquad.de/#/repo/timongcraft/veloboard).
+Note: You can find the current version [here](https://repo.skyblocksquad.de/#/repo/de/timongcraft/VeloBoard).
 
 ### Maven
 
@@ -36,7 +36,7 @@ Note: You can find the current version [here](https://repo.skyblocksquad.de/#/re
             <configuration>
                 <relocations>
                     <relocation>
-                        <pattern>timongcraft.veloboard</pattern>
+                        <pattern>de.timongcraft.veloboard</pattern>
                         <!-- Replace 'com.yourpackage' with the package of your plugin ! -->
                         <shadedPattern>com.yourpackage.veloboard</shadedPattern>
                     </relocation>
@@ -78,12 +78,12 @@ repositories {
 }
 
 dependencies {
-    implementation 'timongcraft:veloboard:CURRENT_VERSION'
+    implementation 'de.timongcraft:VeloBoard:CURRENT_VERSION'
 }
 
 shadowJar {
     // Replace 'com.yourpackage' with the package of your plugin 
-    relocate 'timongcraft.veloboard', 'com.yourpackage.veloboard'
+    relocate 'de.timongcraft.veloboard', 'com.yourpackage.veloboard'
 }
 ```
 
@@ -121,7 +121,7 @@ board.updateLines(
 Small example plugin with a scoreboard that refreshes every second:
 
 ```java
-package timongcraft.veloboard.example;
+package de.timongcraft.veloboard.example;
 
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;

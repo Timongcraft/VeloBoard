@@ -6,7 +6,7 @@
 
     <groupId>de.timongcraft</groupId>
     <artifactId>VeloBoard</artifactId>
-    <version>1.1.1</version>
+    <version>1.2.0</version>
 
     <properties>
         <java.version>17</java.version>
@@ -64,7 +64,7 @@
 
     <distributionManagement>
         <repository>
-            <id>skyblocksquad-repo</id>
+            <id>skyblocksquad</id>
             <url>https://repo.skyblocksquad.de/repo</url>
         </repository>
     </distributionManagement>
@@ -96,7 +96,7 @@
         <dependency>
             <groupId>de.timongcraft</groupId>
             <artifactId>VeloPacketImpl</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
         </dependency>
     </dependencies>
 
