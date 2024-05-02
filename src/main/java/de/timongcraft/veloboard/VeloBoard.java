@@ -141,17 +141,15 @@ public class VeloBoard {
         int linesSize = this.lines.size();
 
         if (oldLines.size() != linesSize) {
-            List<Component> oldLinesCopy = new ArrayList<>(oldLines);
-
             if (oldLines.size() > linesSize) {
-                for (int i = oldLinesCopy.size(); i > linesSize; i--) {
+                for (int i = oldLines.size(); i > linesSize; i--) {
                     sendTeamPacket(i - 1, UpdateTeamsPacket.Mode.REMOVE_TEAM);
                     sendScorePacket(i - 1, UpdateScorePacket.Action.REMOVE_SCORE);
 
                     oldLines.remove(0);
                 }
             } else {
-                for (int i = oldLinesCopy.size(); i < linesSize; i++) {
+                for (int i = oldLines.size(); i < linesSize; i++) {
                     sendScorePacket(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
                     sendTeamPacket(i, UpdateTeamsPacket.Mode.CREATE_TEAM);
                 }
