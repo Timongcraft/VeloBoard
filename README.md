@@ -1,12 +1,12 @@
 # VeloBoard
 
-Scoreboard API for Velocity plugins (1.18.2-1.20.5)
+Scoreboard API for Velocity plugins (1.18.2-1.21)
 
 ⚠️ After installing first read [Register Packets](#registering-packets)!
 
 ## Features
 
-* Works from version 1.18.2 to 1.20.5
+* Works from version 1.18.2 to 1.21
 * Pretty small
 * Easy to use
 * Integrates [Adventure](https://github.com/KyoriPowered/adventure)
@@ -24,7 +24,7 @@ Note: You can find the current version [here](https://repo.skyblocksquad.de/#/re
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
-            <version>3.5.2</version>
+            <version>3.6.0</version>
             <executions>
                 <execution>
                     <phase>package</phase>
