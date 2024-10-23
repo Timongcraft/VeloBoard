@@ -1,12 +1,12 @@
 # VeloBoard
 
-Scoreboard API for Velocity plugins (1.18.2-1.21)
+Scoreboard API for Velocity plugins (1.18.2-1.21.2)
 
 ⚠️ After installing first read [Register Packets](#registering-packets)!
 
 ## Features
 
-* Works from version 1.18.2 to 1.21
+* Works from version 1.18.2 to 1.21.2
 * Pretty small
 * Easy to use
 * Integrates [Adventure](https://github.com/KyoriPowered/adventure)
@@ -68,7 +68,7 @@ When using Maven, make sure to build directly with Maven and not with your IDE c
 
 ```groovy
 plugins {
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'io.github.goooler.shadow' version '8.1.8'
 }
 
 repositories {
@@ -95,7 +95,7 @@ Copy all files in your plugin.
 
 ### Registering packets
 
-First you need to call `VeloBoardRegistry.register()` in your `Main` or `ProxyInitializeEvent` to register the necessary packets.
+Make sure to call `VeloBoardRegistry.register()` in the `ProxyInitializeEvent` to register the necessary packets.
 
 ### Creating a scoreboard
 

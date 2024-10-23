@@ -42,8 +42,7 @@ public class VeloBoard {
     public VeloBoard(Player player, Component title, ComponentUtils.NumberFormat numberFormat) {
         this.player = player;
         this.title = title;
-        if (numberFormat != null)
-            this.numberFormat = numberFormat;
+        this.numberFormat = numberFormat;
         this.id = VELOBOARD_ID;
     }
 
@@ -228,7 +227,7 @@ public class VeloBoard {
                         id + ':' + score,
                         mode,
                         Component.empty(),
-                        new ArrayList<>(),
+                        EnumSet.noneOf(UpdateTeamsPacket.FriendlyFlag.class),
                         UpdateTeamsPacket.NameTagVisibility.ALWAYS,
                         UpdateTeamsPacket.CollisionRule.ALWAYS,
                         NamedTextColor.WHITE,
