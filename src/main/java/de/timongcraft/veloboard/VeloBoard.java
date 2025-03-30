@@ -1,15 +1,28 @@
 package de.timongcraft.veloboard;
 
+import com.google.common.annotations.Beta;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
-import de.timongcraft.velopacketimpl.network.protocol.packets.*;
+import de.timongcraft.velopacketimpl.network.protocol.packets.DisplayObjectivePacket;
+import de.timongcraft.velopacketimpl.network.protocol.packets.ResetScorePacket;
+import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateObjectivesPacket;
+import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateScorePacket;
+import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateTeamsPacket;
 import de.timongcraft.velopacketimpl.utils.ComponentUtils;
 import de.timongcraft.velopacketimpl.utils.annotations.Since;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_20_3;
 
@@ -17,15 +30,15 @@ import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_20_3;
 public class VeloBoard {
 
     public static final String VELOBOARD_ID = "veloboard";
-    protected static final String[] COLOR_CODES = {"§0", "§1", "§2", "§3", "§4", "§5", "§6", "§7", "§8", "§9", "§a", "§b", "§c", "§d", "§e", "§f", "§k", "§l", "§m", "§n", "§o", "§r"};
+    public static final String[] COLOR_CODES = {"§0", "§1", "§2", "§3", "§4", "§5", "§6", "§7", "§8", "§9", "§a", "§b", "§c", "§d", "§e", "§f", "§k", "§l", "§m", "§n", "§o", "§r"};
 
-    private final Player player;
+    private final ConnectedPlayer player;
     private final String id;
     private Component title;
     @Since(MINECRAFT_1_20_3)
     private ComponentUtils.NumberFormat numberFormat;
     private final List<Component> lines = new ArrayList<>();
-
+    private final Lock linesLock = new ReentrantLock();
     private boolean deleted = false;
 
     public VeloBoard(Player player) {
@@ -33,14 +46,14 @@ public class VeloBoard {
     }
 
     public VeloBoard(Player player, Component title) {
-        this.player = player;
+        this.player = (ConnectedPlayer) player;
         this.title = title;
         this.id = VELOBOARD_ID;
     }
 
     @Since(MINECRAFT_1_20_3)
     public VeloBoard(Player player, Component title, ComponentUtils.NumberFormat numberFormat) {
-        this.player = player;
+        this.player = (ConnectedPlayer) player;
         this.title = title;
         this.numberFormat = numberFormat;
         this.id = VELOBOARD_ID;
@@ -56,10 +69,15 @@ public class VeloBoard {
 
         initialize();
         updateTitle(title);
-        for (int i = 0; i < lines.size(); ++i) {
-            sendScorePacket(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
-            sendTeamPacket(i, UpdateTeamsPacket.Mode.CREATE_TEAM);
-            sendLineChange(i);
+        linesLock.lock();
+        try {
+            for (int i = 0; i < lines.size(); ++i) {
+                sendScorePacket(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
+                sendTeamPacket(i, UpdateTeamsPacket.Mode.CREATE_TEAM);
+                sendLineChange(i);
+            }
+        } finally {
+            linesLock.unlock();
         }
     }
 
@@ -85,8 +103,30 @@ public class VeloBoard {
         sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
     }
 
+    /**
+     * DEPRECATION NOTICE: This method is not thread-safe and may lead to concurrency issues.
+     * It will be phased out in future versions of VeloBoard.
+     *
+     * <p>Replacement methods:
+     * <br>{@link #getLinesCopy()}
+     * <br>{@link #updateLinesWithoutUpdate(Collection)}
+     */
+    @Deprecated(forRemoval = true, since = "1.4.0")
     public List<Component> getLines() {
         return lines;
+    }
+
+    /**
+     * Returns an immutable view of the lines.
+     *
+     * <p>Note: To perform mutable operations on the lines, use {@link #updateLine(int, Component)},
+     * {@link #updateLines(Component...)}, {@link #updateLines(Collection)}, or {@link #updateLinesWithoutUpdate(Collection)}
+     *
+     * @return an unmodifiable list of the current lines
+     */
+    @Beta
+    public List<Component> getLinesCopy() {
+        return Collections.unmodifiableList(lines);
     }
 
     public Component getLine(int lineNumber) {
@@ -98,31 +138,37 @@ public class VeloBoard {
      * @see #updateLines(Component...)
      * @see #updateLines(Collection)
      */
-    public synchronized void updateLine(int lineNumber, Component lineText) {
+    public void updateLine(int lineNumber, Component lineText) {
         checkLineNumber(lineNumber, false, true);
 
-        if (lineNumber < linesSize()) {
-            lines.set(lineNumber, lineText);
-            sendLineChange(getScoreByLine(lineNumber));
-            return;
-        }
+        List<Component> newLines;
+        linesLock.lock();
+        try {
+            if (lineNumber < lines.size()) {
+                lines.set(lineNumber, lineText);
+                sendLineChange(getScoreByLine(lineNumber));
+                return;
+            }
 
-        List<Component> newLines = new ArrayList<>(lines);
-        if (lineNumber > linesSize())
-            for (int i = linesSize(); i < lineNumber; ++i)
-                newLines.add(Component.empty());
+            newLines = new ArrayList<>(lines);
+            if (lineNumber > lines.size()) {
+                for (int i = lines.size(); i < lineNumber; ++i) {
+                    newLines.add(Component.empty());
+                }
+            }
+        } finally {
+            linesLock.unlock();
+        }
 
         newLines.add(lineText);
         updateLines(newLines);
     }
 
-    public synchronized void removeLine(int lineNumber) {
+    public void removeLine(int lineNumber) {
         checkLineNumber(lineNumber, false, false);
-
-        if (lineNumber >= linesSize())
-            return;
-
+        if (lineNumber >= lines.size()) return;
         List<Component> newLines = new ArrayList<>(lines);
+
         newLines.remove(lineNumber);
         updateLines(newLines);
     }
@@ -131,12 +177,17 @@ public class VeloBoard {
         updateLines(Arrays.asList(lines));
     }
 
-    public synchronized void updateLines(Collection<Component> lines) {
+    public void updateLines(Collection<Component> lines) {
         Objects.requireNonNull(lines, "lines");
         checkLineNumber(lines.size(), false, true);
         List<Component> oldLines = new ArrayList<>(this.lines);
-        this.lines.clear();
-        this.lines.addAll(lines);
+        linesLock.lock();
+        try {
+            this.lines.clear();
+            this.lines.addAll(lines);
+        } finally {
+            linesLock.unlock();
+        }
         int linesSize = this.lines.size();
 
         if (oldLines.size() != linesSize) {
@@ -155,14 +206,28 @@ public class VeloBoard {
             }
         }
 
-        for (int i = 0; i < linesSize; ++i)
+        for (int i = 0; i < linesSize; ++i) {
             if (!Objects.equals(getLineByScore(oldLines, i), getLineByScore(i)))
                 sendLineChange(i);
+        }
+    }
+
+    /**
+     * Useful to update lines before a {@link #resend()}.
+     */
+    @Beta
+    public void updateLinesWithoutUpdate(Collection<Component> lines) {
+        linesLock.lock();
+        try {
+            this.lines.clear();
+            this.lines.addAll(lines);
+        } finally {
+            linesLock.unlock();
+        }
     }
 
     private void sendLineChange(int score) {
-        Component line = getLineByScore(score);
-        sendTeamPacket(score, UpdateTeamsPacket.Mode.UPDATE_TEAM_INFO, line, Component.empty());
+        sendTeamPacket(score, UpdateTeamsPacket.Mode.UPDATE_TEAM_INFO, getLineByScore(score), Component.empty());
     }
 
     private void checkLineNumber(int lineNumber, boolean checkInRange, boolean checkMax) {
@@ -193,7 +258,7 @@ public class VeloBoard {
                 new UpdateObjectivesPacket(
                         id,
                         mode,
-                        translateComponent(title),
+                        player.translateMessage(title),
                         UpdateObjectivesPacket.Type.INTEGER,
                         numberFormat
                 )
@@ -231,8 +296,8 @@ public class VeloBoard {
                         UpdateTeamsPacket.NameTagVisibility.ALWAYS,
                         UpdateTeamsPacket.CollisionRule.ALWAYS,
                         NamedTextColor.WHITE,
-                        translateComponent(prefix),
-                        translateComponent(suffix),
+                        player.translateMessage(prefix),
+                        player.translateMessage(suffix),
                         Collections.singletonList(COLOR_CODES[score])
                 )
         );
@@ -243,12 +308,22 @@ public class VeloBoard {
             throw new IllegalStateException("This VeloBoard is deleted");
         } else {
             if (player.isActive())
-                ((ConnectedPlayer) player).getConnection().write(packet);
+                player.getConnection().write(packet);
         }
     }
 
+    /**
+     * Translates the component in the locale of the {@link VeloBoard}'s player.
+     *
+     * <p>DEPRECATION NOTICE: This method is deprecated because it simply calls {@code connectedPlayer.translateMessage(component)}.
+     * Instead, use {@code (ConnectedPlayer) player.translateMessage(component)} directly.
+     *
+     * <p>Note: This method will remain available in the foreseeable future, as its implementation relies on
+     * Velocity's internal module, which may (and should) not be utilized by all projects.
+     */
+    @Deprecated(since = "1.4.0")
     public Component translateComponent(Component component) {
-        return ((ConnectedPlayer) player).translateMessage(component);
+        return player.translateMessage(component);
     }
 
     public Player getPlayer() {
@@ -263,13 +338,24 @@ public class VeloBoard {
         return deleted;
     }
 
+    /**
+     * DEPRECATION NOTICE: This method is deprecated because it simply calls {@code lines.size()}.
+     * Instead, use {@code lines.size()} directly.
+     */
+    @Deprecated(forRemoval = true, since = "1.4.0")
     public int linesSize() {
         return lines.size();
     }
 
     public void clear() {
-        for (int i = 0; i < this.lines.size(); ++i)
-            this.sendTeamPacket(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
+        linesLock.lock();
+        try {
+            for (int i = 0; i < this.lines.size(); ++i) {
+                this.sendTeamPacket(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
+            }
+        } finally {
+            linesLock.unlock();
+        }
 
         this.sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
     }
@@ -277,7 +363,12 @@ public class VeloBoard {
     public void delete() {
         clear();
         title = null;
-        lines.clear();
+        linesLock.lock();
+        try {
+            lines.clear();
+        } finally {
+            linesLock.unlock();
+        }
         numberFormat = null;
 
         this.deleted = true;
