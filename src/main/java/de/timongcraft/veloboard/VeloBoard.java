@@ -105,7 +105,7 @@ public class VeloBoard {
 
     /**
      * DEPRECATION NOTICE: This method is not thread-safe and may lead to concurrency issues.
-     * It will be phased out in future versions of VeloBoard.
+     * It will be phased out in a future version of VeloBoard.
      *
      * <p>Replacement methods:
      * <br>{@link #getLinesCopy()}
@@ -213,7 +213,7 @@ public class VeloBoard {
     }
 
     /**
-     * Useful to update lines before a {@link #resend()}.
+     * Useful for updating lines before a {@link #resend()}.
      */
     @Beta
     public void updateLinesWithoutUpdate(Collection<Component> lines) {
@@ -316,9 +316,9 @@ public class VeloBoard {
      * Translates the component in the locale of the {@link VeloBoard}'s player.
      *
      * <p>DEPRECATION NOTICE: This method is deprecated because it simply calls {@code connectedPlayer.translateMessage(component)}.
-     * Instead, use {@code (ConnectedPlayer) player.translateMessage(component)} directly.
+     * Instead, use {@code ((ConnectedPlayer) player).translateMessage(component)} directly.
      *
-     * <p>Note: This method will remain available in the foreseeable future, as its implementation relies on
+     * <p>Note: This method will remain available for the foreseeable future, as its implementation relies on
      * Velocity's internal module, which may (and should) not be utilized by all projects.
      */
     @Deprecated(since = "1.4.0")

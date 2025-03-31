@@ -1,6 +1,10 @@
 package de.timongcraft.veloboard;
 
-import de.timongcraft.velopacketimpl.network.protocol.packets.*;
+import de.timongcraft.velopacketimpl.network.protocol.packets.DisplayObjectivePacket;
+import de.timongcraft.velopacketimpl.network.protocol.packets.ResetScorePacket;
+import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateObjectivesPacket;
+import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateScorePacket;
+import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateTeamsPacket;
 
 /**
  * Handles the registration of required components.
