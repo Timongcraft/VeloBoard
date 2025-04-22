@@ -1,6 +1,5 @@
 package de.timongcraft.veloboard;
 
-import com.google.common.annotations.Beta;
 import com.velocitypowered.api.proxy.Player;
 import de.timongcraft.velopacketimpl.network.protocol.packets.DisplayObjectivePacket;
 import de.timongcraft.velopacketimpl.network.protocol.packets.ResetScorePacket;
@@ -79,59 +78,6 @@ public class VeloBoard extends AbstractBoard {
         }
     }
 
-    public Component getTitle() {
-        return title;
-    }
-
-    public void updateTitle(Component title) {
-        this.title = title;
-
-        sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
-    }
-
-    @Since(MINECRAFT_1_20_3)
-    public @Nullable ComponentUtils.NumberFormat getNumberFormat() {
-        return defaultNumberFormat;
-    }
-
-    @Since(MINECRAFT_1_20_3)
-    public void setNumberFormat(@Nullable ComponentUtils.NumberFormat defaultNumberFormat) {
-        this.defaultNumberFormat = defaultNumberFormat;
-
-        sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
-    }
-
-    /**
-     * DEPRECATION NOTICE: This method is not thread-safe and may lead to concurrency issues.
-     * It will be phased out in a future version of VeloBoard.
-     *
-     * <p>Replacement methods:
-     * <br>{@link #getLinesCopy()}
-     * <br>{@link #updateLinesWithoutUpdate(Collection)}
-     */
-    @Deprecated(forRemoval = true, since = "1.4.0")
-    public List<Component> getLines() {
-        return lines;
-    }
-
-    /**
-     * Returns an immutable view of the lines.
-     *
-     * <p>Note: To perform mutable operations on the lines, use {@link #updateLine(int, Component)},
-     * {@link #updateLines(Component...)}, {@link #updateLines(Collection)}, or {@link #updateLinesWithoutUpdate(Collection)}
-     *
-     * @return an unmodifiable list of the current lines
-     */
-    @Beta
-    public List<Component> getLinesCopy() {
-        return Collections.unmodifiableList(lines);
-    }
-
-    public Component getLine(int lineIndex) {
-        checkLineIndex(lineIndex, true, false);
-        return lines.get(lineIndex);
-    }
-
     /**
      * @see #updateLines(Component...)
      * @see #updateLines(Collection)
@@ -205,16 +151,16 @@ public class VeloBoard extends AbstractBoard {
         }
 
         for (int i = 0; i < linesSize; ++i) {
-            if (!Objects.equals(getLineByScore(oldLines, i), getLineByScore(this.lines, i)))
+            if (!Objects.equals(getLineByScore(oldLines, i), getLineByScore(this.lines, i))) {
                 sendLineChange(i);
+            }
         }
     }
 
     /**
      * Useful for updating lines before a {@link #resend()}.
      */
-    @Beta
-    public void updateLinesWithoutUpdate(Collection<Component> lines) {
+    public void updateLinesSilent(Collection<Component> lines) {
         linesLock.lock();
         try {
             this.lines.clear();
@@ -229,14 +175,96 @@ public class VeloBoard extends AbstractBoard {
     }
 
     private void checkLineIndex(int lineIndex, boolean checkInRange, boolean checkMax) {
-        if (lineIndex < 0)
+        if (lineIndex < 0) {
             throw new IllegalArgumentException("Line index must be non-negative");
+        }
 
-        if (checkInRange && lineIndex >= linesSize())
+        if (checkInRange && lineIndex >= linesSize()) {
             throw new IllegalArgumentException("Line index must be within the valid range (index >= 0 && index < " + linesSize() + ")");
+        }
 
-        if (checkMax && lineIndex >= COLOR_CODES.length - 1)
+        if (checkMax && lineIndex >= COLOR_CODES.length - 1) {
             throw new IllegalArgumentException("Line index must be less than " + COLOR_CODES.length + ". For 'unlimited' lines, use SimpleBoard instead");
+        }
+    }
+
+    @Override
+    public void clear() {
+        linesLock.lock();
+        try {
+            for (int i = 0; i < linesSize(); ++i) {
+                sendTeamPacket(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
+            }
+        } finally {
+            linesLock.unlock();
+        }
+
+        sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
+    }
+
+    @Override
+    public void delete() {
+        super.delete();
+        title = null;
+        linesLock.lock();
+        try {
+            lines.clear();
+        } finally {
+            linesLock.unlock();
+        }
+        defaultNumberFormat = null;
+    }
+
+    public Component getTitle() {
+        return title;
+    }
+
+    public void updateTitle(Component title) {
+        this.title = title;
+
+        sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
+    }
+
+    @Since(MINECRAFT_1_20_3)
+    public @Nullable ComponentUtils.NumberFormat getNumberFormat() {
+        return defaultNumberFormat;
+    }
+
+    @Since(MINECRAFT_1_20_3)
+    public void setNumberFormat(@Nullable ComponentUtils.NumberFormat defaultNumberFormat) {
+        this.defaultNumberFormat = defaultNumberFormat;
+
+        sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
+    }
+
+    /**
+     * DEPRECATION NOTICE: This method is not thread-safe and may lead to concurrency issues.
+     * It will be phased out in a future version of VeloBoard.
+     *
+     * <p>Replacement methods:
+     * <br>{@link #getLinesCopy()}
+     * <br>{@link #updateLinesSilent(Collection)}
+     */
+    @Deprecated(forRemoval = true, since = "1.4.0")
+    public List<Component> getLines() {
+        return lines;
+    }
+
+    /**
+     * Returns an immutable view of the lines.
+     *
+     * <p>Note: To perform mutable operations on the lines, use {@link #updateLine(int, Component)},
+     * {@link #updateLines(Component...)}, {@link #updateLines(Collection)}, or {@link #updateLinesSilent(Collection)}
+     *
+     * @return an unmodifiable list of the current lines
+     */
+    public List<Component> getLinesCopy() {
+        return Collections.unmodifiableList(lines);
+    }
+
+    public Component getLine(int lineIndex) {
+        checkLineIndex(lineIndex, true, false);
+        return lines.get(lineIndex);
     }
 
     private int getScoreByLine(int line) {
@@ -313,33 +341,6 @@ public class VeloBoard extends AbstractBoard {
 
     public int linesSize() {
         return lines.size();
-    }
-
-    @Override
-    public void clear() {
-        linesLock.lock();
-        try {
-            for (int i = 0; i < linesSize(); ++i) {
-                sendTeamPacket(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
-            }
-        } finally {
-            linesLock.unlock();
-        }
-
-        sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
-    }
-
-    @Override
-    public void delete() {
-        super.delete();
-        title = null;
-        linesLock.lock();
-        try {
-            lines.clear();
-        } finally {
-            linesLock.unlock();
-        }
-        defaultNumberFormat = null;
     }
 
 }
