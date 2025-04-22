@@ -1,5 +1,6 @@
 package de.timongcraft.veloboard;
 
+import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.protocol.packet.chat.ComponentHolder;
 import de.timongcraft.velopacketimpl.utils.ComponentUtils;
@@ -31,6 +32,10 @@ public class LinesEntry {
 
     public @Nullable ComponentUtils.NumberFormat getFormat() {
         return format;
+    }
+
+    ComponentUtils.@Nullable NumberFormat formatCompiled(ProtocolVersion version) {
+        return format != null ? format.compiled(version) : null;
     }
 
 }

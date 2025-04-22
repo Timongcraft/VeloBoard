@@ -45,7 +45,7 @@ public class SimpleBoard extends AbstractBoard {
     public SimpleBoard(Player player, Component title, @Nullable ComponentUtils.NumberFormat defaultNumberFormat) {
         super(player);
         setTitleSilent(title);
-        this.defaultNumberFormat = defaultNumberFormat;
+        this.defaultNumberFormat = defaultNumberFormat != null ? defaultNumberFormat.compiled(player.getProtocolVersion()) : null;
         EMPTY_ENTRY = new LinesEntry(new ComponentHolder(player.getProtocolVersion(), Component.empty()), null);
     }
 
@@ -87,7 +87,7 @@ public class SimpleBoard extends AbstractBoard {
     }
 
     public void setDefaultNumberFormat(@Nullable ComponentUtils.NumberFormat defaultNumberFormat) {
-        this.defaultNumberFormat = defaultNumberFormat;
+        this.defaultNumberFormat = defaultNumberFormat != null ? defaultNumberFormat.compiled(player.getProtocolVersion()) : null;
 
         sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
     }
@@ -138,7 +138,7 @@ public class SimpleBoard extends AbstractBoard {
 
     public void setLine(int lineIndex, LinesEntry line) {
         checkLineIndex(lineIndex, false);
-        LinesEntry linesEntry = new LinesEntry(new ComponentHolder(player.getProtocolVersion(), player.translateMessage(line.getComponent())), line.getFormat());
+        LinesEntry linesEntry = new LinesEntry(new ComponentHolder(player.getProtocolVersion(), player.translateMessage(line.getComponent())), line.formatCompiled(player.getProtocolVersion()));
 
         List<LinesEntry> newLines;
         linesLock.lock();
