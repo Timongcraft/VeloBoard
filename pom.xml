@@ -6,7 +6,7 @@
 
     <groupId>de.timongcraft</groupId>
     <artifactId>VeloBoard</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
 
     <properties>
         <java.version>17</java.version>
@@ -112,7 +112,7 @@
         <dependency>
             <groupId>de.timongcraft</groupId>
             <artifactId>VeloPacketImpl</artifactId>
-            <version>3.0.3</version>
+            <version>3.0.4</version>
         </dependency>
     </dependencies>
 </project>

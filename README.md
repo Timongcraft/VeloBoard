@@ -107,10 +107,7 @@ Make sure to call `VeloBoardRegistry.register()` in the `ProxyInitializeEvent` t
 Simply create a new `VeloBoard` and update the title and the lines:
 
 ```java
-VeloBoard board = new VeloBoard(player);
-
-// Set the title
-board.updateTitle(Component.text("VeloBoard").color(NamedTextColor.BLUE));
+VeloBoard board = new VeloBoard(player, Component.text("VeloBoard", NamedTextColor.BLUE));
 
 // Change the lines
 board.updateLines(
