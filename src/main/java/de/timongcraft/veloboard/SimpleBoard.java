@@ -12,6 +12,8 @@ import de.timongcraft.velopacketimpl.utils.ComponentUtils;
 import de.timongcraft.velopacketimpl.utils.annotations.Since;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +23,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * <p><b>Note</b>: With this board, you are no longer limited* in line size and avoid the overhead of teams,
+ * <p><b>Note</b>: With this board, you are no longer limited in line size* and avoid the overhead of teams,
  * as the normal {@link de.timongcraft.veloboard.VeloBoard} requires a team to be created for each line, which is no longer necessary due to new display-name introduced in 1.20.3.
  */
 @SuppressWarnings("unused")
@@ -101,6 +103,7 @@ public class SimpleBoard extends AbstractBoard {
      * @return an unmodifiable list of the current lines
      * @see #getLineComponents
      */
+    @UnmodifiableView
     public List<LinesEntry> getLines() {
         return Collections.unmodifiableList(lines);
     }
@@ -114,6 +117,7 @@ public class SimpleBoard extends AbstractBoard {
      * @return an unmodifiable list of the current lines
      * @see #getLines
      */
+    @Unmodifiable
     public List<Component> getLineComponents() {
         return lines.stream().map(LinesEntry::getComponent).toList();
     }

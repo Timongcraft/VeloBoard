@@ -11,6 +11,7 @@ import de.timongcraft.velopacketimpl.utils.annotations.Since;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,18 +26,7 @@ import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_20_3;
 @SuppressWarnings("unused")
 public class VeloBoard extends AbstractBoard {
 
-    /**
-     * DEPRECATION NOTICE: Now unused, and new variable will no longer be publicly accessible, as it should have no use.
-     * <b>Will be removed in the minor release!
-     */
-    @Deprecated(forRemoval = true, since = "1.5.0")
-    public static final String VELOBOARD_ID = "veloboard";
-    /**
-     * DEPRECATION NOTICE: Will no longer be publicly accessible, as it should have no use.
-     * <b>Will be removed in the minor release!
-     */
-    @Deprecated(forRemoval = true, since = "1.5.0")
-    public static final String[] COLOR_CODES = {"§0", "§1", "§2", "§3", "§4", "§5", "§6", "§7", "§8", "§9", "§a", "§b", "§c", "§d", "§e", "§f", "§k", "§l", "§m", "§n", "§o", "§r"};
+    private static final String[] COLOR_CODES = {"§0", "§1", "§2", "§3", "§4", "§5", "§6", "§7", "§8", "§9", "§a", "§b", "§c", "§d", "§e", "§f", "§k", "§l", "§m", "§n", "§o", "§r"};
 
     private Component title;
     @Since(MINECRAFT_1_20_3)
@@ -258,6 +248,7 @@ public class VeloBoard extends AbstractBoard {
      *
      * @return an unmodifiable list of the current lines
      */
+    @UnmodifiableView
     public List<Component> getLinesCopy() {
         return Collections.unmodifiableList(lines);
     }
