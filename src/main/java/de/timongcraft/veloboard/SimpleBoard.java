@@ -62,67 +62,23 @@ public class SimpleBoard extends AbstractBoard {
             initialize();
 
             for (int i = 0; i < lines.size(); ++i) {
-                sendLineChange(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
+                sendLineChangeUnsafe(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
             }
         });
     }
 
-    public Component getTitle() {
-        return withLock(() -> title.getComponent());
+    @Override
+    public void clear() {
+        withLock(() -> sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD));
     }
 
-    public void setTitle(Component title) {
-        Objects.requireNonNull(title, "title");
+    @Override
+    public void delete() {
         withLock(() -> {
-            setTitleSilent(title);
-            sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
-        });
-    }
-
-    public @Nullable ComponentUtils.NumberFormat getDefaultNumberFormat() {
-        return withLock(() -> defaultNumberFormat);
-    }
-
-    public void setDefaultNumberFormat(@Nullable ComponentUtils.NumberFormat defaultNumberFormat) {
-        withLock(() -> {
-            this.defaultNumberFormat = defaultNumberFormat != null ? defaultNumberFormat.compiled(player.getProtocolVersion()) : null;
-
-            sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
-        });
-    }
-
-    /**
-     * Returns an immutable view of the lines.
-     *
-     * <p>Note: To perform mutable operations on the lines, use {@link #setLine(int, LinesEntry)},
-     * {@link #setLines(LinesEntry...)}, {@link #setLines(Collection)} or {@link #setLinesSilent(Collection)}
-     *
-     * @return an unmodifiable list of the current lines
-     * @see #getLineComponents
-     */
-    @Unmodifiable
-    public List<LinesEntry> getLines() {
-        return withLock(() -> List.copyOf(lines));
-    }
-
-    /**
-     * Returns an immutable view of the line's components.
-     *
-     * <p>Note: To perform mutable operations on the lines, use {@link #setLineComponent(int, Component)},
-     * {@link #setLineComponents(Component...)}, {@link #setLineComponents(Collection)}, or {@link #setLinesComponentsSilent(Collection)}
-     *
-     * @return an unmodifiable list of the current lines
-     * @see #getLines
-     */
-    @Unmodifiable
-    public List<Component> getLineComponents() {
-        return withLock(() -> lines.stream().map(LinesEntry::getComponent).toList());
-    }
-
-    public @Nullable LinesEntry getLine(int lineIndex) {
-        return withLock(() -> {
-            checkLineIndexUnsafe(lineIndex, true);
-            return lines.get(lineIndex) != null ? lines.get(lineIndex) : null;
+            super.delete();
+            title = null;
+            lines.clear();
+            defaultNumberFormat = null;
         });
     }
 
@@ -130,6 +86,13 @@ public class SimpleBoard extends AbstractBoard {
         return withLock(() -> {
             checkLineIndexUnsafe(lineIndex, true);
             return lines.get(lineIndex) != null ? lines.get(lineIndex).getComponent() : null;
+        });
+    }
+
+    public @Nullable LinesEntry getLine(int lineIndex) {
+        return withLock(() -> {
+            checkLineIndexUnsafe(lineIndex, true);
+            return lines.get(lineIndex) != null ? lines.get(lineIndex) : null;
         });
     }
 
@@ -150,7 +113,7 @@ public class SimpleBoard extends AbstractBoard {
 
             if (lineIndex < lines.size()) {
                 lines.set(lineIndex, linesEntry);
-                sendLineChange(getScoreByLineUnsafe(lineIndex), UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
+                sendLineChangeUnsafe(getScoreByLineUnsafe(lineIndex), UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
                 return;
             }
 
@@ -168,6 +131,38 @@ public class SimpleBoard extends AbstractBoard {
             newLines.remove(lineIndex);
             setLines(newLines);
         });
+    }
+
+    /**
+     * Returns an immutable view of the line's components.
+     *
+     * <p>Note: To perform mutable operations on the lines, use {@link #setLineComponent(int, Component)},
+     * {@link #setLineComponents(Component...)}, {@link #setLineComponents(Collection)}, or {@link #setLinesComponentsSilent(Collection)}
+     *
+     * @return an unmodifiable list of the current lines
+     * @see #getLines
+     */
+    @Unmodifiable
+    public List<Component> getLineComponents() {
+        return withLock(() -> lines.stream().map(LinesEntry::getComponent).toList());
+    }
+
+    /**
+     * Returns an immutable view of the lines.
+     *
+     * <p>Note: To perform mutable operations on the lines, use {@link #setLine(int, LinesEntry)},
+     * {@link #setLines(LinesEntry...)}, {@link #setLines(Collection)} or {@link #setLinesSilent(Collection)}
+     *
+     * @return an unmodifiable list of the current lines
+     * @see #getLineComponents
+     */
+    @Unmodifiable
+    public List<LinesEntry> getLines() {
+        return withLock(() -> List.copyOf(lines));
+    }
+
+    public int linesSize() {
+        return withLock(lines::size);
     }
 
     public void setLineComponents(Component... lineComponents) {
@@ -202,6 +197,19 @@ public class SimpleBoard extends AbstractBoard {
         setLines(Arrays.asList(lines));
     }
 
+    public void setLines(Collection<LinesEntry> lines) {
+        Objects.requireNonNull(lines, "lines");
+        withLock(() -> {
+            checkLineIndexUnsafe(lines.size(), false);
+            List<LinesEntry> oldLines = new ArrayList<>(this.lines);
+
+            this.lines.clear();
+            this.lines.addAll(lines);
+
+            updateScoreboard(oldLines);
+        });
+    }
+
     /**
      * Useful for updating lines before a {@link #resend()}.
      */
@@ -212,22 +220,15 @@ public class SimpleBoard extends AbstractBoard {
         });
     }
 
-    public int linesSize() {
-        return withLock(lines::size);
+    public Component getTitle() {
+        return withLock(() -> title.getComponent());
     }
 
-    @Override
-    public void clear() {
-        withLock(() -> sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD));
-    }
-
-    @Override
-    public void delete() {
+    public void setTitle(Component title) {
+        Objects.requireNonNull(title, "title");
         withLock(() -> {
-            super.delete();
-            title = null;
-            lines.clear();
-            defaultNumberFormat = null;
+            setTitleSilent(title);
+            sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
         });
     }
 
@@ -235,40 +236,15 @@ public class SimpleBoard extends AbstractBoard {
         title = new ComponentHolder(player.getProtocolVersion(), player.translateMessage(newTitle));
     }
 
-    private void updateScoreboard(List<LinesEntry> oldLines) {
-        if (oldLines.size() != lines.size() && oldLines.size() > lines.size()) {
-            for (int i = oldLines.size(); i > lines.size(); i--) {
-                sendLineChange(i, UpdateScorePacket.Action.REMOVE_SCORE);
-
-                oldLines.remove(0);
-            }
-        } else {
-            for (int i = oldLines.size(); i < lines.size(); i++) {
-                sendLineChange(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
-            }
-        }
-
-        for (int i = 0; i < lines.size(); ++i) {
-            LinesEntry newLine = getLineByScore(lines, i);
-            if (newLine == null) continue;
-            LinesEntry oldLine = getLineByScore(oldLines, i);
-            if (oldLine == null) continue;
-            if (newLine.getComponent().equals(oldLine.getComponent())
-                    && Objects.equals(newLine.getFormat(), oldLine.getFormat())) continue;
-            sendLineChange(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
-        }
+    public @Nullable ComponentUtils.NumberFormat getDefaultNumberFormat() {
+        return withLock(() -> defaultNumberFormat);
     }
 
-    private void setLines(Collection<LinesEntry> lines) {
-        Objects.requireNonNull(lines, "lines");
+    public void setDefaultNumberFormat(@Nullable ComponentUtils.NumberFormat defaultNumberFormat) {
         withLock(() -> {
-            checkLineIndexUnsafe(lines.size(), false);
-            List<LinesEntry> oldLines = new ArrayList<>(this.lines);
+            this.defaultNumberFormat = defaultNumberFormat != null ? defaultNumberFormat.compiled(player.getProtocolVersion()) : null;
 
-            this.lines.clear();
-            this.lines.addAll(lines);
-
-            updateScoreboard(oldLines);
+            sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
         });
     }
 
@@ -294,7 +270,31 @@ public class SimpleBoard extends AbstractBoard {
         }
     }
 
-    private void sendLineChange(int score, UpdateScorePacket.Action action) {
+    private void updateScoreboard(List<LinesEntry> oldLines) {
+        if (oldLines.size() != lines.size() && oldLines.size() > lines.size()) {
+            for (int i = oldLines.size(); i > lines.size(); i--) {
+                sendLineChangeUnsafe(i, UpdateScorePacket.Action.REMOVE_SCORE);
+
+                oldLines.remove(0);
+            }
+        } else {
+            for (int i = oldLines.size(); i < lines.size(); i++) {
+                sendLineChangeUnsafe(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
+            }
+        }
+
+        for (int i = 0; i < lines.size(); ++i) {
+            LinesEntry newLine = getLineByScore(lines, i);
+            if (newLine == null) continue;
+            LinesEntry oldLine = getLineByScore(oldLines, i);
+            if (oldLine == null) continue;
+            if (newLine.getComponent().equals(oldLine.getComponent())
+                    && Objects.equals(newLine.getFormat(), oldLine.getFormat())) continue;
+            sendLineChangeUnsafe(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
+        }
+    }
+
+    private void sendLineChangeUnsafe(int score, UpdateScorePacket.Action action) {
         if (action == UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE) {
             LinesEntry line = getLineByScore(lines, score);
             sendPacket(

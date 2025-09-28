@@ -22,7 +22,7 @@ public abstract class AbstractBoard {
     public AbstractBoard(Player player) {
         Objects.requireNonNull(player, "player");
         this.player = (ConnectedPlayer) player;
-        this.id = BOARD_IDENTIFIER + ":" + player.getUniqueId() + ":" + System.currentTimeMillis();
+        this.id = BOARD_IDENTIFIER + ":" + player.getUniqueId();
     }
 
     protected void sendPacket(MinecraftPacket packet) {

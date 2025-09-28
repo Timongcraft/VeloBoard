@@ -69,6 +69,34 @@ public class VeloBoard extends AbstractBoard {
         });
     }
 
+    @Override
+    public void clear() {
+        withLock(() -> {
+            for (int i = 0; i < this.lines.size(); ++i) {
+                sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
+            }
+
+            sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
+        });
+    }
+
+    @Override
+    public void delete() {
+        withLock(() -> {
+            super.delete();
+            title = null;
+            lines.clear();
+            defaultNumberFormat = null;
+        });
+    }
+
+    public Component getLine(int lineIndex) {
+        return withLock(() -> {
+            checkLineIndexUnsafe(lineIndex, true, false);
+            return lines.get(lineIndex);
+        });
+    }
+
     /**
      * @see #updateLines(Component...)
      * @see #updateLines(Collection)
@@ -98,6 +126,23 @@ public class VeloBoard extends AbstractBoard {
             newLines.remove(lineIndex);
             updateLines(newLines);
         });
+    }
+
+    /**
+     * Returns an immutable view of the lines.
+     *
+     * <p>Note: To perform mutable operations on the lines, use {@link #updateLine(int, Component)},
+     * {@link #updateLines(Component...)}, {@link #updateLines(Collection)}, or {@link #updateLinesSilent(Collection)}
+     *
+     * @return an unmodifiable list of the current lines
+     */
+    @Unmodifiable
+    public List<Component> getLinesCopy() {
+        return withLock(() -> List.copyOf(lines));
+    }
+
+    public int linesSize() {
+        return withLock(lines::size);
     }
 
     public void updateLines(Component... lines) {
@@ -155,46 +200,6 @@ public class VeloBoard extends AbstractBoard {
         });
     }
 
-    private void sendLineChangeUnsafe(int score) {
-        sendTeamPacketUnchecked(score, UpdateTeamsPacket.Mode.UPDATE_TEAM_INFO, getLineByScoreUnchecked(lines, score));
-    }
-
-    private void checkLineIndexUnsafe(int lineIndex, boolean checkInRange, boolean checkMax) {
-        if (lineIndex < 0) {
-            throw new IllegalArgumentException("Line index must be non-negative");
-        }
-
-        if (checkInRange && lineIndex >= lines.size()) {
-            throw new IllegalArgumentException("Line index must be within the valid range (index >= 0 && index < " + lines.size() + ")");
-        }
-
-        if (checkMax && lineIndex >= MAX_LINES_SIZE) {
-            throw new IllegalArgumentException("Line index " + lineIndex + " must be less than " + MAX_LINES_SIZE + "." +
-                    "For unlimited* lines, use SimpleBoard instead.");
-        }
-    }
-
-    @Override
-    public void clear() {
-        withLock(() -> {
-            for (int i = 0; i < this.lines.size(); ++i) {
-                sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
-            }
-
-            sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
-        });
-    }
-
-    @Override
-    public void delete() {
-        withLock(() -> {
-            super.delete();
-            title = null;
-            lines.clear();
-            defaultNumberFormat = null;
-        });
-    }
-
     public Component getTitle() {
         return withLock(() -> title);
     }
@@ -222,23 +227,29 @@ public class VeloBoard extends AbstractBoard {
     }
 
     /**
-     * Returns an immutable view of the lines.
+     * Translates the component in the locale of the {@link VeloBoard}'s player.
      *
-     * <p>Note: To perform mutable operations on the lines, use {@link #updateLine(int, Component)},
-     * {@link #updateLines(Component...)}, {@link #updateLines(Collection)}, or {@link #updateLinesSilent(Collection)}
-     *
-     * @return an unmodifiable list of the current lines
+     * <p>DEPRECATION NOTICE: This method is deprecated because it simply calls {@code connectedPlayer.translateMessage(component)}.
+     * Instead, use {@code ((ConnectedPlayer) player).translateMessage(component)} or replacement code with the GlobalTranslator directly.
      */
-    @Unmodifiable
-    public List<Component> getLinesCopy() {
-        return withLock(() -> List.copyOf(lines));
+    @Deprecated(since = "1.4.0", forRemoval = true)
+    public Component translateComponent(Component component) {
+        return player.translateMessage(component);
     }
 
-    public Component getLine(int lineIndex) {
-        return withLock(() -> {
-            checkLineIndexUnsafe(lineIndex, true, false);
-            return lines.get(lineIndex);
-        });
+    private void checkLineIndexUnsafe(int lineIndex, boolean checkInRange, boolean checkMax) {
+        if (lineIndex < 0) {
+            throw new IllegalArgumentException("Line index must be non-negative");
+        }
+
+        if (checkInRange && lineIndex >= lines.size()) {
+            throw new IllegalArgumentException("Line index must be within the valid range (index >= 0 && index < " + lines.size() + ")");
+        }
+
+        if (checkMax && lineIndex >= MAX_LINES_SIZE) {
+            throw new IllegalArgumentException("Line index " + lineIndex + " must be less than " + MAX_LINES_SIZE + "." +
+                    "For unlimited* lines, use SimpleBoard instead.");
+        }
     }
 
     private int getScoreByLineUnsafe(int lineIndex) {
@@ -247,6 +258,10 @@ public class VeloBoard extends AbstractBoard {
 
     private static Component getLineByScoreUnchecked(List<Component> lines, int score) {
         return lines.get(lines.size() - score - 1);
+    }
+
+    private void sendLineChangeUnsafe(int score) {
+        sendTeamPacketUnchecked(score, UpdateTeamsPacket.Mode.UPDATE_TEAM_INFO, getLineByScoreUnchecked(lines, score));
     }
 
     private void sendObjectivePacket(UpdateObjectivesPacket.Mode mode) {
@@ -297,21 +312,6 @@ public class VeloBoard extends AbstractBoard {
                         Collections.singletonList(COLOR_CODES[score])
                 )
         );
-    }
-
-    /**
-     * Translates the component in the locale of the {@link VeloBoard}'s player.
-     *
-     * <p>DEPRECATION NOTICE: This method is deprecated because it simply calls {@code connectedPlayer.translateMessage(component)}.
-     * Instead, use {@code ((ConnectedPlayer) player).translateMessage(component)} or replacement code with the GlobalTranslator directly.
-     */
-    @Deprecated(since = "1.4.0", forRemoval = true)
-    public Component translateComponent(Component component) {
-        return player.translateMessage(component);
-    }
-
-    public int linesSize() {
-        return withLock(lines::size);
     }
 
 }
