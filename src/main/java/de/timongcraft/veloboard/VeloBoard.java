@@ -1,6 +1,7 @@
 package de.timongcraft.veloboard;
 
 import com.velocitypowered.api.proxy.Player;
+import de.timongcraft.veloboard.utils.ListUtils;
 import de.timongcraft.velopacketimpl.network.protocol.packets.DisplayObjectivePacket;
 import de.timongcraft.velopacketimpl.network.protocol.packets.ResetScorePacket;
 import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateObjectivesPacket;
@@ -11,7 +12,7 @@ import de.timongcraft.velopacketimpl.utils.annotations.Since;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnmodifiableView;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +28,7 @@ import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_20_3;
 public class VeloBoard extends AbstractBoard {
 
     private static final String[] COLOR_CODES = {"§0", "§1", "§2", "§3", "§4", "§5", "§6", "§7", "§8", "§9", "§a", "§b", "§c", "§d", "§e", "§f", "§k", "§l", "§m", "§n", "§o", "§r"};
+    public static final int MAX_LINES_SIZE = COLOR_CODES.length;
 
     private Component title;
     @Since(MINECRAFT_1_20_3)
@@ -44,28 +46,27 @@ public class VeloBoard extends AbstractBoard {
     @Since(MINECRAFT_1_20_3)
     public VeloBoard(Player player, Component title, @Nullable ComponentUtils.NumberFormat defaultNumberFormat) {
         super(player);
-        this.title = title;
-        this.defaultNumberFormat = defaultNumberFormat;
+        this.title = Objects.requireNonNull(title, "title");
+        this.defaultNumberFormat = defaultNumberFormat != null ? defaultNumberFormat.compiled(player.getProtocolVersion()) : null;
     }
 
     public void initialize() {
-        sendObjectivePacket(UpdateObjectivesPacket.Mode.CREATE_SCOREBOARD);
-        sendPacket(new DisplayObjectivePacket(1, id));
+        withLock(() -> {
+            sendObjectivePacket(UpdateObjectivesPacket.Mode.CREATE_SCOREBOARD);
+            sendPacket(new DisplayObjectivePacket(1, id));
+        });
     }
 
     public void resend() {
-        clear();
+        withLock(() -> {
+            clear();
+            initialize();
 
-        initialize();
-        linesLock.lock();
-        try {
-            for (int i = 0; i < linesSize(); ++i) {
-                sendScorePacket(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
-                sendTeamPacket(i, UpdateTeamsPacket.Mode.CREATE_TEAM, getLineByScore(lines, i));
+            for (int i = 0; i < lines.size(); ++i) {
+                sendScorePacketUnchecked(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
+                sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.CREATE_TEAM, getLineByScoreUnchecked(lines, i));
             }
-        } finally {
-            linesLock.unlock();
-        }
+        });
     }
 
     /**
@@ -73,38 +74,30 @@ public class VeloBoard extends AbstractBoard {
      * @see #updateLines(Collection)
      */
     public void updateLine(int lineIndex, Component lineText) {
-        checkLineIndex(lineIndex, false, true);
+        Objects.requireNonNull(lineText, "lineText");
+        withLock(() -> {
+            checkLineIndexUnsafe(lineIndex, false, true);
 
-        List<Component> newLines;
-        linesLock.lock();
-        try {
-            if (lineIndex < linesSize()) {
+            if (lineIndex < lines.size()) {
                 lines.set(lineIndex, lineText);
-                sendLineChange(getScoreByLine(lineIndex));
+                sendLineChangeUnsafe(getScoreByLineUnsafe(lineIndex));
                 return;
             }
 
-            newLines = new ArrayList<>(lines);
-            if (lineIndex > linesSize()) {
-                for (int i = linesSize(); i < lineIndex; ++i) {
-                    newLines.add(Component.empty());
-                }
-            }
-        } finally {
-            linesLock.unlock();
-        }
-
-        newLines.add(lineText);
-        updateLines(newLines);
+            List<Component> newLines = new ArrayList<>(lines);
+            ListUtils.setOrPad(newLines, lineIndex, lineText, Component::empty);
+            updateLines(newLines);
+        });
     }
 
     public void removeLine(int lineIndex) {
-        checkLineIndex(lineIndex, false, false);
-        if (lineIndex >= linesSize()) return;
-        List<Component> newLines = new ArrayList<>(lines);
+        withLock(() -> {
+            checkLineIndexUnsafe(lineIndex, true, true);
+            List<Component> newLines = new ArrayList<>(lines);
 
-        newLines.remove(lineIndex);
-        updateLines(newLines);
+            newLines.remove(lineIndex);
+            updateLines(newLines);
+        });
     }
 
     public void updateLines(Component... lines) {
@@ -113,131 +106,119 @@ public class VeloBoard extends AbstractBoard {
 
     public void updateLines(Collection<Component> lines) {
         Objects.requireNonNull(lines, "lines");
-        checkLineIndex(linesSize(), false, true);
-        List<Component> oldLines = new ArrayList<>(this.lines);
-        linesLock.lock();
-        try {
+        for (Component component : lines) {
+            Objects.requireNonNull(component, "lines contain null element");
+        }
+        withLock(() -> {
+            checkLineIndexUnsafe(lines.size(), false, true);
+
+            List<Component> oldLines = new ArrayList<>(this.lines);
+
             this.lines.clear();
             this.lines.addAll(lines);
-        } finally {
-            linesLock.unlock();
-        }
-        int linesSize = this.linesSize();
 
-        if (oldLines.size() != linesSize) {
-            if (oldLines.size() > linesSize) {
-                for (int i = oldLines.size(); i > linesSize; i--) {
-                    sendTeamPacket(i - 1, UpdateTeamsPacket.Mode.REMOVE_TEAM);
-                    sendScorePacket(i - 1, UpdateScorePacket.Action.REMOVE_SCORE);
+            if (oldLines.size() != this.lines.size()) {
+                if (oldLines.size() > this.lines.size()) {
+                    for (int i = oldLines.size(); i > this.lines.size(); i--) {
+                        sendTeamPacketUnchecked(i - 1, UpdateTeamsPacket.Mode.REMOVE_TEAM);
+                        sendScorePacketUnchecked(i - 1, UpdateScorePacket.Action.REMOVE_SCORE);
 
-                    oldLines.remove(0);
-                }
-            } else {
-                for (int i = oldLines.size(); i < linesSize; i++) {
-                    sendScorePacket(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
-                    sendTeamPacket(i, UpdateTeamsPacket.Mode.CREATE_TEAM);
+                        oldLines.remove(0);
+                    }
+                } else {
+                    for (int i = oldLines.size(); i < this.lines.size(); i++) {
+                        sendScorePacketUnchecked(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
+                        sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.CREATE_TEAM);
+                    }
                 }
             }
-        }
 
-        for (int i = 0; i < linesSize; ++i) {
-            if (!Objects.equals(getLineByScore(oldLines, i), getLineByScore(this.lines, i))) {
-                sendLineChange(i);
+            for (int i = 0; i < this.lines.size(); ++i) {
+                if (!Objects.equals(getLineByScoreUnchecked(oldLines, i), getLineByScoreUnchecked(this.lines, i))) {
+                    sendLineChangeUnsafe(i);
+                }
             }
-        }
+        });
     }
 
     /**
      * Useful for updating lines before a {@link #resend()}.
      */
     public void updateLinesSilent(Collection<Component> lines) {
-        linesLock.lock();
-        try {
+        Objects.requireNonNull(lines, "lines");
+        for (Component component : lines) {
+            Objects.requireNonNull(component, "lines contain null element");
+        }
+        withLock(() -> {
             this.lines.clear();
             this.lines.addAll(lines);
-        } finally {
-            linesLock.unlock();
-        }
+        });
     }
 
-    private void sendLineChange(int score) {
-        sendTeamPacket(score, UpdateTeamsPacket.Mode.UPDATE_TEAM_INFO, getLineByScore(lines, score));
+    private void sendLineChangeUnsafe(int score) {
+        sendTeamPacketUnchecked(score, UpdateTeamsPacket.Mode.UPDATE_TEAM_INFO, getLineByScoreUnchecked(lines, score));
     }
 
-    private void checkLineIndex(int lineIndex, boolean checkInRange, boolean checkMax) {
+    private void checkLineIndexUnsafe(int lineIndex, boolean checkInRange, boolean checkMax) {
         if (lineIndex < 0) {
             throw new IllegalArgumentException("Line index must be non-negative");
         }
 
-        if (checkInRange && lineIndex >= linesSize()) {
-            throw new IllegalArgumentException("Line index must be within the valid range (index >= 0 && index < " + linesSize() + ")");
+        if (checkInRange && lineIndex >= lines.size()) {
+            throw new IllegalArgumentException("Line index must be within the valid range (index >= 0 && index < " + lines.size() + ")");
         }
 
-        if (checkMax && lineIndex >= COLOR_CODES.length - 1) {
-            throw new IllegalArgumentException("Line index must be less than " + COLOR_CODES.length + ". For 'unlimited' lines, use SimpleBoard instead");
+        if (checkMax && lineIndex >= MAX_LINES_SIZE) {
+            throw new IllegalArgumentException("Line index " + lineIndex + " must be less than " + MAX_LINES_SIZE + "." +
+                    "For unlimited* lines, use SimpleBoard instead.");
         }
     }
 
     @Override
     public void clear() {
-        linesLock.lock();
-        try {
-            for (int i = 0; i < linesSize(); ++i) {
-                sendTeamPacket(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
+        withLock(() -> {
+            for (int i = 0; i < this.lines.size(); ++i) {
+                sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
             }
-        } finally {
-            linesLock.unlock();
-        }
 
-        sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
+            sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
+        });
     }
 
     @Override
     public void delete() {
-        super.delete();
-        title = null;
-        linesLock.lock();
-        try {
+        withLock(() -> {
+            super.delete();
+            title = null;
             lines.clear();
-        } finally {
-            linesLock.unlock();
-        }
-        defaultNumberFormat = null;
+            defaultNumberFormat = null;
+        });
     }
 
     public Component getTitle() {
-        return title;
+        return withLock(() -> title);
     }
 
     public void updateTitle(Component title) {
-        this.title = title;
-
-        sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
+        Objects.requireNonNull(title, "title");
+        withLock(() -> {
+            this.title = title;
+            sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
+        });
     }
 
     @Since(MINECRAFT_1_20_3)
     public @Nullable ComponentUtils.NumberFormat getNumberFormat() {
-        return defaultNumberFormat;
+        return withLock(() -> defaultNumberFormat);
     }
 
     @Since(MINECRAFT_1_20_3)
     public void setNumberFormat(@Nullable ComponentUtils.NumberFormat defaultNumberFormat) {
-        this.defaultNumberFormat = defaultNumberFormat;
+        withLock(() -> {
+            this.defaultNumberFormat = defaultNumberFormat != null ? defaultNumberFormat.compiled(player.getProtocolVersion()) : null;
 
-        sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
-    }
-
-    /**
-     * DEPRECATION NOTICE: This method is not thread-safe and may lead to concurrency issues.
-     * It will be phased out in a future version of VeloBoard.
-     *
-     * <p>Replacement methods:
-     * <br>{@link #getLinesCopy()}
-     * <br>{@link #updateLinesSilent(Collection)}
-     */
-    @Deprecated(forRemoval = true, since = "1.4.0")
-    public List<Component> getLines() {
-        return lines;
+            sendObjectivePacket(UpdateObjectivesPacket.Mode.UPDATE_SCOREBOARD);
+        });
     }
 
     /**
@@ -248,22 +229,24 @@ public class VeloBoard extends AbstractBoard {
      *
      * @return an unmodifiable list of the current lines
      */
-    @UnmodifiableView
+    @Unmodifiable
     public List<Component> getLinesCopy() {
-        return Collections.unmodifiableList(lines);
+        return withLock(() -> List.copyOf(lines));
     }
 
     public Component getLine(int lineIndex) {
-        checkLineIndex(lineIndex, true, false);
-        return lines.get(lineIndex);
+        return withLock(() -> {
+            checkLineIndexUnsafe(lineIndex, true, false);
+            return lines.get(lineIndex);
+        });
     }
 
-    private int getScoreByLine(int line) {
-        return linesSize() - line - 1;
+    private int getScoreByLineUnsafe(int lineIndex) {
+        return lines.size() - lineIndex - 1;
     }
 
-    private Component getLineByScore(List<Component> lines, int score) {
-        return score < linesSize() ? lines.get(linesSize() - score - 1) : null;
+    private static Component getLineByScoreUnchecked(List<Component> lines, int score) {
+        return lines.get(lines.size() - score - 1);
     }
 
     private void sendObjectivePacket(UpdateObjectivesPacket.Mode mode) {
@@ -278,7 +261,7 @@ public class VeloBoard extends AbstractBoard {
         );
     }
 
-    private void sendScorePacket(int score, UpdateScorePacket.Action action) {
+    private void sendScorePacketUnchecked(int score, UpdateScorePacket.Action action) {
         sendPacket(
                 action != UpdateScorePacket.Action.REMOVE_SCORE || player.getProtocolVersion().getProtocol() < MINECRAFT_1_20_3.getProtocol() ?
                         new UpdateScorePacket(
@@ -295,11 +278,11 @@ public class VeloBoard extends AbstractBoard {
         );
     }
 
-    private void sendTeamPacket(int score, UpdateTeamsPacket.Mode mode) {
-        sendTeamPacket(score, mode, Component.empty());
+    private void sendTeamPacketUnchecked(int score, UpdateTeamsPacket.Mode mode) {
+        sendTeamPacketUnchecked(score, mode, Component.empty());
     }
 
-    private void sendTeamPacket(int score, UpdateTeamsPacket.Mode mode, Component teamPrefix) {
+    private void sendTeamPacketUnchecked(int score, UpdateTeamsPacket.Mode mode, Component teamPrefix) {
         sendPacket(
                 new UpdateTeamsPacket(
                         id + ':' + score,
@@ -320,18 +303,15 @@ public class VeloBoard extends AbstractBoard {
      * Translates the component in the locale of the {@link VeloBoard}'s player.
      *
      * <p>DEPRECATION NOTICE: This method is deprecated because it simply calls {@code connectedPlayer.translateMessage(component)}.
-     * Instead, use {@code ((ConnectedPlayer) player).translateMessage(component)} directly.
-     *
-     * <p>Note: This method will remain available for the foreseeable future, as its implementation relies on
-     * Velocity's internal module, which may (and should) not be utilized by all projects.
+     * Instead, use {@code ((ConnectedPlayer) player).translateMessage(component)} or replacement code with the GlobalTranslator directly.
      */
-    @Deprecated(since = "1.4.0")
+    @Deprecated(since = "1.4.0", forRemoval = true)
     public Component translateComponent(Component component) {
         return player.translateMessage(component);
     }
 
     public int linesSize() {
-        return lines.size();
+        return withLock(lines::size);
     }
 
 }
