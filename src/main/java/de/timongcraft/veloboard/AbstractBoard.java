@@ -31,7 +31,7 @@ public abstract class AbstractBoard {
         }
     }
 
-    public ConnectedPlayer getPlayer() {
+    public Player getPlayer() {
         return player;
     }
 

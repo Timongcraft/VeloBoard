@@ -64,7 +64,7 @@ public class VeloBoard extends AbstractBoard {
 
             for (int i = 0; i < lines.size(); ++i) {
                 sendScorePacketUnchecked(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
-                sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.CREATE_TEAM, getLineByScoreUnchecked(lines, i));
+                sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.CREATE_TEAM, getLineByScore(lines, i));
             }
         });
     }
@@ -163,23 +163,22 @@ public class VeloBoard extends AbstractBoard {
             this.lines.addAll(lines);
 
             if (oldLines.size() != this.lines.size()) {
-                if (oldLines.size() > this.lines.size()) {
-                    for (int i = oldLines.size(); i > this.lines.size(); i--) {
-                        sendTeamPacketUnchecked(i - 1, UpdateTeamsPacket.Mode.REMOVE_TEAM);
-                        sendScorePacketUnchecked(i - 1, UpdateScorePacket.Action.REMOVE_SCORE);
-
-                        oldLines.remove(0);
-                    }
-                } else {
-                    for (int i = oldLines.size(); i < this.lines.size(); i++) {
+                for (int i = 0; i < this.lines.size(); i++) {
+                    if (i >= oldLines.size()) {
                         sendScorePacketUnchecked(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
                         sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.CREATE_TEAM);
                     }
+                    sendLineChangeUnsafe(i);
+                }
+
+                for (int i = this.lines.size(); i < oldLines.size(); i++) {
+                    sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
+                    sendScorePacketUnchecked(i, UpdateScorePacket.Action.REMOVE_SCORE);
                 }
             }
 
             for (int i = 0; i < this.lines.size(); ++i) {
-                if (!Objects.equals(getLineByScoreUnchecked(oldLines, i), getLineByScoreUnchecked(this.lines, i))) {
+                if (!Objects.equals(getLineByScore(oldLines, i), getLineByScore(this.lines, i))) {
                     sendLineChangeUnsafe(i);
                 }
             }
@@ -256,12 +255,16 @@ public class VeloBoard extends AbstractBoard {
         return lines.size() - lineIndex - 1;
     }
 
-    private static Component getLineByScoreUnchecked(List<Component> lines, int score) {
-        return lines.get(lines.size() - score - 1);
+    private static @Nullable Component getLineByScore(List<Component> lines, int score) {
+        if (score < lines.size()) {
+            return lines.get(lines.size() - score - 1);
+        } else {
+            return null;
+        }
     }
 
     private void sendLineChangeUnsafe(int score) {
-        sendTeamPacketUnchecked(score, UpdateTeamsPacket.Mode.UPDATE_TEAM_INFO, getLineByScoreUnchecked(lines, score));
+        sendTeamPacketUnchecked(score, UpdateTeamsPacket.Mode.UPDATE_TEAM_INFO, getLineByScore(lines, score));
     }
 
     private void sendObjectivePacket(UpdateObjectivesPacket.Mode mode) {
