@@ -1,12 +1,12 @@
 # VeloBoard
 
-Scoreboard API for Velocity plugins (1.18.2-1.21.9)
+Scoreboard API for Velocity plugins (1.18.2-1.21.11)
 
 ⚠️ After installing first read [Register Packets](#registering-packets)!
 
 ## Features
 
-* Works from version 1.18.2 to 1.21.9
+* Works from version 1.18.2 to 1.21.11
 * Pretty small
 * Easy to use
 * Integrates [Adventure](https://github.com/KyoriPowered/adventure)
@@ -137,13 +137,12 @@ board.updateLines(
   import com.velocitypowered.api.proxy.ProxyServer;
   import de.timongcraft.veloboard.VeloBoard;
   import de.timongcraft.veloboard.VeloBoardRegistry;
-  import net.kyori.adventure.text.Component;
-  import net.kyori.adventure.text.format.NamedTextColor;
-
   import java.time.Duration;
   import java.util.HashMap;
   import java.util.Map;
   import java.util.UUID;
+  import net.kyori.adventure.text.Component;
+  import net.kyori.adventure.text.format.NamedTextColor;
 
   @Plugin(
           id = "example",
@@ -197,9 +196,9 @@ board.updateLines(
       private void updateBoard(VeloBoard board) {
           board.updateLines(
                   Component.empty(),
-                  Component.text("Players: " + server.getPlayerCount()),
+                  Component.text("Players: " + server.getPlayerCount(), NamedTextColor.WHITE),
                   Component.empty(),
-                  Component.text("Ping: " + board.getPlayer().getPing()),
+                  Component.text("Ping: " + board.getPlayer().getPing(), NamedTextColor.WHITE),
                   Component.empty()
           );
       }

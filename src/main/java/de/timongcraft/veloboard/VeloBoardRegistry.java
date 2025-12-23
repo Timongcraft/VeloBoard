@@ -16,15 +16,18 @@ import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateTeamsPacket;
 public class VeloBoardRegistry {
 
     public static void register() {
-        registerPackets();
+        register(false);
     }
 
-    private static void registerPackets() {
+    public static void register(boolean onlyForSimpleBoard) {
         DisplayObjectivePacket.register(true);
-        UpdateObjectivesPacket.register(true);
         UpdateScorePacket.register(true);
         ResetScorePacket.register(true);
-        UpdateTeamsPacket.register(true);
+        UpdateObjectivesPacket.register(true);
+
+        if (!onlyForSimpleBoard) {
+            UpdateTeamsPacket.register(true);
+        }
     }
 
 }

@@ -145,6 +145,9 @@ public class VeloBoard extends AbstractBoard {
         return withLock(lines::size);
     }
 
+    /**
+     * @see #updateLines(Collection)
+     */
     public void updateLines(Component... lines) {
         updateLines(Arrays.asList(lines));
     }
@@ -183,6 +186,15 @@ public class VeloBoard extends AbstractBoard {
                 }
             }
         });
+    }
+
+    /**
+     * Useful for updating lines before a {@link #resend()}.
+     *
+     * @see #updateLinesSilent(Collection)
+     */
+    public void updateLinesSilent(Component... lines) {
+        updateLinesSilent(Arrays.asList(lines));
     }
 
     /**

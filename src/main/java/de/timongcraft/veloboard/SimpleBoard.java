@@ -212,6 +212,15 @@ public class SimpleBoard extends AbstractBoard {
 
     /**
      * Useful for updating lines before a {@link #resend()}.
+     *
+     * @see #setLinesSilent(Collection)
+     */
+    public void setLinesSilent(LinesEntry... lines) {
+        setLinesSilent(Arrays.asList(lines));
+    }
+
+    /**
+     * Useful for updating lines before a {@link #resend()}.
      */
     public void setLinesSilent(Collection<LinesEntry> lines) {
         withLock(() -> {
