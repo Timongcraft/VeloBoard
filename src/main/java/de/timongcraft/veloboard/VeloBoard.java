@@ -1,5 +1,7 @@
 package de.timongcraft.veloboard;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.velocitypowered.api.proxy.Player;
 import de.timongcraft.veloboard.utils.ListUtils;
 import de.timongcraft.velopacketimpl.network.protocol.packets.DisplayObjectivePacket;
@@ -9,18 +11,15 @@ import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateScorePacket;
 import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateTeamsPacket;
 import de.timongcraft.velopacketimpl.utils.ComponentUtils;
 import de.timongcraft.velopacketimpl.utils.annotations.Since;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
 
 import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_20_3;
 
@@ -53,7 +52,7 @@ public class VeloBoard extends AbstractBoard {
     public void initialize() {
         withLock(() -> {
             sendObjectivePacket(UpdateObjectivesPacket.Mode.CREATE_SCOREBOARD);
-            sendPacket(new DisplayObjectivePacket(1, id));
+            sendPacket(DisplayObjectivePacket.of(1, id));
         });
     }
 
@@ -64,7 +63,7 @@ public class VeloBoard extends AbstractBoard {
 
             for (int i = 0; i < lines.size(); ++i) {
                 sendScorePacketUnchecked(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
-                sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.CREATE_TEAM, getLineByScore(lines, i));
+                sendTeamPacketUnchecked(i, true, getLineByScoreUnsafe(i));
             }
         });
     }
@@ -73,7 +72,7 @@ public class VeloBoard extends AbstractBoard {
     public void clear() {
         withLock(() -> {
             for (int i = 0; i < this.lines.size(); ++i) {
-                sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
+                sendRemoveTeamUnchecked(i);
             }
 
             sendObjectivePacket(UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD);
@@ -169,19 +168,20 @@ public class VeloBoard extends AbstractBoard {
                 for (int i = 0; i < this.lines.size(); i++) {
                     if (i >= oldLines.size()) {
                         sendScorePacketUnchecked(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
-                        sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.CREATE_TEAM);
+                        sendTeamPacketUnchecked(i, true, getLineByScoreUnsafe(i));
+                    } else {
+                        sendLineChangeUnsafe(i);
                     }
-                    sendLineChangeUnsafe(i);
                 }
 
                 for (int i = this.lines.size(); i < oldLines.size(); i++) {
-                    sendTeamPacketUnchecked(i, UpdateTeamsPacket.Mode.REMOVE_TEAM);
+                    sendRemoveTeamUnchecked(i);
                     sendScorePacketUnchecked(i, UpdateScorePacket.Action.REMOVE_SCORE);
                 }
             }
 
             for (int i = 0; i < this.lines.size(); ++i) {
-                if (!Objects.equals(getLineByScore(oldLines, i), getLineByScore(this.lines, i))) {
+                if (!Objects.equals(getLineByScore(i, oldLines), getLineByScoreUnsafe(i))) {
                     sendLineChangeUnsafe(i);
                 }
             }
@@ -264,26 +264,33 @@ public class VeloBoard extends AbstractBoard {
     }
 
     private int getScoreByLineUnsafe(int lineIndex) {
+        return getScoreByLine(lineIndex, lines);
+    }
+
+    private int getScoreByLine(int lineIndex, List<Component> lines) {
         return lines.size() - lineIndex - 1;
     }
 
-    private static @Nullable Component getLineByScore(List<Component> lines, int score) {
-        if (score < lines.size()) {
-            return lines.get(lines.size() - score - 1);
-        } else {
-            return null;
-        }
+    private @Nullable Component getLineByScoreUnsafe(int score) {
+        return getLineByScore(score, lines);
+    }
+
+    private @Nullable Component getLineByScore(int score, List<Component> lines) {
+        int index = lines.size() - score - 1;
+        if (index < 0 || index >= lines.size()) return null;
+        return lines.get(index);
     }
 
     private void sendLineChangeUnsafe(int score) {
-        sendTeamPacketUnchecked(score, UpdateTeamsPacket.Mode.UPDATE_TEAM_INFO, getLineByScore(lines, score));
+        sendTeamPacketUnchecked(score, false, getLineByScoreUnsafe(score));
     }
 
     private void sendObjectivePacket(UpdateObjectivesPacket.Mode mode) {
         sendPacket(
-                new UpdateObjectivesPacket(
-                        id,
-                        mode,
+                mode == UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD
+                        ? UpdateObjectivesPacket.ofRemove(id)
+                        : UpdateObjectivesPacket.of(id,
+                        mode == UpdateObjectivesPacket.Mode.CREATE_SCOREBOARD,
                         player.translateMessage(title),
                         UpdateObjectivesPacket.Type.INTEGER,
                         defaultNumberFormat
@@ -293,40 +300,44 @@ public class VeloBoard extends AbstractBoard {
 
     private void sendScorePacketUnchecked(int score, UpdateScorePacket.Action action) {
         sendPacket(
-                action != UpdateScorePacket.Action.REMOVE_SCORE || player.getProtocolVersion().getProtocol() < MINECRAFT_1_20_3.getProtocol() ?
-                        new UpdateScorePacket(
-                                COLOR_CODES[score],
-                                action,
-                                id,
-                                score
-                        )
-                        :
-                        new ResetScorePacket(
-                                COLOR_CODES[score],
-                                id
-                        )
+                action == UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE
+                        ? UpdateScorePacket.of(COLOR_CODES[score], id, score)
+
+                        : player.getProtocolVersion().lessThan(MINECRAFT_1_20_3)
+                        ? UpdateScorePacket.ofLegacyRemove(COLOR_CODES[score], id)
+                        : ResetScorePacket.of(COLOR_CODES[score], id)
         );
     }
 
-    private void sendTeamPacketUnchecked(int score, UpdateTeamsPacket.Mode mode) {
-        sendTeamPacketUnchecked(score, mode, Component.empty());
+    private void sendRemoveTeamUnchecked(int score) {
+        sendPacket(UpdateTeamsPacket.ofRemove(id + ':' + score));
     }
 
-    private void sendTeamPacketUnchecked(int score, UpdateTeamsPacket.Mode mode, Component teamPrefix) {
-        sendPacket(
-                new UpdateTeamsPacket(
-                        id + ':' + score,
-                        mode,
-                        Component.empty(),
-                        EnumSet.noneOf(UpdateTeamsPacket.FriendlyFlag.class),
-                        UpdateTeamsPacket.NameTagVisibility.ALWAYS,
-                        UpdateTeamsPacket.CollisionRule.ALWAYS,
-                        NamedTextColor.BLACK,
-                        player.translateMessage(teamPrefix),
-                        Component.empty(),
-                        Collections.singletonList(COLOR_CODES[score])
-                )
-        );
+    private void sendTeamPacketUnchecked(int score, boolean create, Component teamPrefix) {
+        if (create) {
+            sendPacket(UpdateTeamsPacket.ofCreate(
+                    id + ':' + score,
+                    Component.empty(),
+                    ImmutableSet.of(),
+                    UpdateTeamsPacket.NameTagVisibility.ALWAYS,
+                    UpdateTeamsPacket.CollisionRule.ALWAYS,
+                    NamedTextColor.BLACK,
+                    player.translateMessage(teamPrefix),
+                    Component.empty(),
+                    ImmutableList.of(COLOR_CODES[score])
+            ));
+        } else {
+            sendPacket(UpdateTeamsPacket.ofUpdateInfo(
+                    id + ':' + score,
+                    Component.empty(),
+                    ImmutableSet.of(),
+                    UpdateTeamsPacket.NameTagVisibility.ALWAYS,
+                    UpdateTeamsPacket.CollisionRule.ALWAYS,
+                    NamedTextColor.BLACK,
+                    player.translateMessage(teamPrefix),
+                    Component.empty()
+            ));
+        }
     }
 
 }

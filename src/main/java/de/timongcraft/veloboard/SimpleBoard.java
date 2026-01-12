@@ -9,15 +9,14 @@ import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateObjectivesPa
 import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateScorePacket;
 import de.timongcraft.velopacketimpl.utils.ComponentUtils;
 import de.timongcraft.velopacketimpl.utils.annotations.Since;
-import net.kyori.adventure.text.Component;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_20_3;
 
@@ -52,7 +51,7 @@ public class SimpleBoard extends AbstractBoard {
     public void initialize() {
         withLock(() -> {
             sendObjectivePacket(UpdateObjectivesPacket.Mode.CREATE_SCOREBOARD);
-            sendPacket(new DisplayObjectivePacket(1, id));
+            sendPacket(DisplayObjectivePacket.of(1, id));
         });
     }
 
@@ -307,7 +306,7 @@ public class SimpleBoard extends AbstractBoard {
         if (action == UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE) {
             LinesEntry line = getLineByScore(lines, score);
             sendPacket(
-                    new UpdateScorePacket(
+                    UpdateScorePacket.of(
                             String.valueOf(score),
                             id,
                             score,
@@ -320,7 +319,7 @@ public class SimpleBoard extends AbstractBoard {
                     )
             );
         } else {
-            sendPacket(new ResetScorePacket(
+            sendPacket(ResetScorePacket.of(
                     String.valueOf(score),
                     id
             ));
@@ -329,9 +328,11 @@ public class SimpleBoard extends AbstractBoard {
 
     private void sendObjectivePacket(UpdateObjectivesPacket.Mode mode) {
         sendPacket(
-                new UpdateObjectivesPacket(
+                mode == UpdateObjectivesPacket.Mode.REMOVE_SCOREBOARD
+                        ? UpdateObjectivesPacket.ofRemove(id)
+                        : UpdateObjectivesPacket.of(
                         id,
-                        mode,
+                        mode == UpdateObjectivesPacket.Mode.CREATE_SCOREBOARD,
                         title,
                         UpdateObjectivesPacket.Type.INTEGER,
                         defaultNumberFormat
