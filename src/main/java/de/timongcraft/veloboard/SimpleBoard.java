@@ -280,19 +280,19 @@ public class SimpleBoard extends AbstractBoard {
     }
 
     private void updateScoreboard(List<LinesEntry> oldLines) {
-        if (oldLines.size() != lines.size() && oldLines.size() > lines.size()) {
-            for (int i = oldLines.size(); i > lines.size(); i--) {
+        if (oldLines.size() > lines.size()) {
+            for (int i = oldLines.size() - 1; i >= lines.size(); i--) {
                 sendLineChangeUnsafe(i, UpdateScorePacket.Action.REMOVE_SCORE);
-
-                oldLines.remove(0);
             }
-        } else {
+        }
+
+        if (lines.size() > oldLines.size()) {
             for (int i = oldLines.size(); i < lines.size(); i++) {
                 sendLineChangeUnsafe(i, UpdateScorePacket.Action.CREATE_OR_UPDATE_SCORE);
             }
         }
 
-        for (int i = 0; i < lines.size(); ++i) {
+        for (int i = 0; i < Math.min(oldLines.size(), lines.size()); i++) {
             LinesEntry newLine = getLineByScore(lines, i);
             if (newLine == null) continue;
             LinesEntry oldLine = getLineByScore(oldLines, i);
