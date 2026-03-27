@@ -9,8 +9,8 @@ import de.timongcraft.velopacketimpl.network.protocol.packets.UpdateTeamsPacket;
 /**
  * Handles the registration of required components.
  *
- * <p>This class ensures that all necessary setups are performed, but users can
- * implement their own registration logic if preferred.
+ * @apiNote This class ensures that all necessary setups are performed,
+ * but users can implement their own registration logic if preferred.
  */
 @SuppressWarnings("unused")
 public class VeloBoardRegistry {
