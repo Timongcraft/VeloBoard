@@ -1,19 +1,19 @@
 # VeloBoard
 
-Scoreboard API for [Velocity](https://github.com/PaperMC/Velocity) plugins (1.18.2-26.1)
+Scoreboard API for [Velocity](https://github.com/PaperMC/Velocity) plugins (1.18.2-26.2)
 
 ⚠️ After installing first read [Register Packets](#registering-packets)!
 
 ## Features
 
-* Works from version 1.18.2 to 26.1
+* Works from version 1.18.2 to 26.2
 * Pretty small
 * Easy to use
 * Integrates [Adventure](https://github.com/PaperMC/adventure)
 * Dynamic scoreboard size: no need to add/remove lines, as you can directly give a collection to change all the lines
 
 ## Getting started
-[![VeloBoard](https://repo.skyblocksquad.de/api/badge/latest/repo/de/timongcraft/VeloBoard?name=Version)](https://repo.skyblocksquad.de/#/repo/de/timongcraft/VeloBoard)
+[![VeloBoard](https://repo.skyblocksquad.de/api/badge/latest/repo/de/timongcraft/VeloBoard?name=Version&filter=none:SNAPSHOT)](https://repo.skyblocksquad.de/#/repo/de/timongcraft/VeloBoard)
 
 Note: You can also find all versions [here](https://repo.skyblocksquad.de/#/repo/de/timongcraft/VeloBoard).
 (you can also find artifact snippets there)
